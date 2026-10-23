@@ -527,7 +527,7 @@ svg{display:block}
       <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Luck Cube</b><small>Кубик · угадай число · ×2</small></button>
       <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
       <button class="game-card" data-game="chest"><span class="gc-ico" data-ic="chest"></span><span class="gc-text"><b>Golden Pick</b><small>5 сундуков · приз до ×5</small></span></button>
-      <button class="game-card" data-game="cards"><span class="gc-ico" data-ic="cards"></span><span class="gc-text"><b>Card Roll</b><small>Кубик · карты · сумма 11–29 · ×2</small></span></button>
+      <button class="game-card" data-game="cards"><span class="gc-ico" data-ic="cards"></span><span class="gc-text"><b>Card Roll</b><small>Кубик · карты · сумма 11–24 · ×2</small></span></button>
     </div>
     <div class="seg" id="modeSeg">
       <button class="seg-btn" data-inf="0">Обычная игра</button>
@@ -567,7 +567,7 @@ svg{display:block}
         <div class="tray tray-cards">
           <div class="cr-top">
             <div class="dice-row" id="cardDieRow"></div>
-            <div class="cr-sum"><small>Сумма</small><b id="crTotal">—</b><span class="cr-zone" id="crZone">нужно 11–29</span></div>
+            <div class="cr-sum"><small>Сумма</small><b id="crTotal">—</b><span class="cr-zone" id="crZone">нужно 11–24</span></div>
           </div>
           <div class="cr-cards" id="crCards"></div>
         </div>
@@ -628,9 +628,9 @@ svg{display:block}
     <li>Выберите фишку (размер ставки) и нажмите на поле <b>«Ваша ставка»</b>. Ставка одна за раунд, лимита на сумму нет.</li>
     <li>Нажмите «Бросить кубик»: выпадает число <b>от 1 до 6</b>. Столько карт вы получите из колоды в 52 карты.</li>
     <li>Очки: <b>2–10</b> — по номиналу, <b>валет, дама, король — по 10</b>, <b>туз — 1 или 11</b> (значение туза выбирается случайно).</li>
-    <li>Сумма очков считается автоматически. Если она от <b>11 до 29</b> включительно — вы выиграли, выплата <b>×2</b>. Ставка входит в выплату: 100 → 200.</li>
-    <li>Сумма <b>10 и меньше</b> (недобор) или <b>30 и больше</b> (перебор) — ставка сгорает.</li>
-    <li>Пример: ставка 100, кубик 4, карты 3, 7, король и 5 → 3 + 7 + 10 + 5 = <b>25</b> → вы получаете 200.</li>
+    <li>Сумма очков считается автоматически. Если она от <b>11 до 24</b> включительно — вы выиграли, выплата <b>×2</b>. Ставка входит в выплату: 100 → 200.</li>
+    <li>Сумма <b>10 и меньше</b> (недобор) или <b>25 и больше</b> (перебор) — ставка сгорает.</li>
+    <li>Пример: ставка 100, кубик 4, карты 3, 7, король и 4 → 3 + 7 + 10 + 4 = <b>24</b> → вы получаете 200.</li>
   </ul>
   <ul id="rulesChest" hidden>
     <li>На столе <b>5 закрытых сундуков</b>.</li>
@@ -782,7 +782,7 @@ const GAMES = {
     action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'},
   chest: {title:'Golden Pick', brand:'GOLDEN PICK', tagline:'Выбери сундук · найди приз', cells:['1','2','3','4','5'], maxCells: 1, limited: false,
     action:'Открыть сундук', busy:'Сундуки открываются…', idle:'Выберите сундук и сделайте ставку'},
-  cards: {title:'Card Roll', brand:'CARD ROLL', tagline:'Кубик · карты · сумма 11–29', cells:['bet'], maxCells: 1, limited: false,
+  cards: {title:'Card Roll', brand:'CARD ROLL', tagline:'Кубик · карты · сумма 11–24', cells:['bet'], maxCells: 1, limited: false,
     action:'Бросить кубик', busy:'Раздача…', idle:'Сделайте ставку и бросайте кубик'}
 };
 // Golden Pick: содержимое каждого сундука выбирается случайно и независимо (возврат ≈94%)
@@ -803,10 +803,10 @@ function drawChests() {
 const colorOf = id => COLORS.find(c => c.id === id);
 
 // ================= Card Roll =================
-// Кубик 1–6 определяет, сколько карт из колоды в 52 карты получит игрок. Сумма 11–29 выигрывает ×2.
+// Кубик 1–6 определяет, сколько карт из колоды в 52 карты получит игрок. Сумма 11–24 выигрывает ×2.
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const SUITS = ['♠', '♥', '♦', '♣'];
-const CARD_MIN = 11, CARD_MAX = 29, CARD_MULT = 2;
+const CARD_MIN = 11, CARD_MAX = 24, CARD_MULT = 2;
 function drawCards() {
   const die = rnd6(), deck = [];
   for (const s of SUITS) for (const r of RANKS) deck.push({r, s});
@@ -1745,8 +1745,8 @@ function buildBoard(game) {
     const el = document.createElement('button');
     el.className = 'cell bcell';
     el.dataset.cell = 'bet';
-    el.innerHTML = `<span class="bc-title">Ваша ставка</span><span class="bc-main">Сумма 11–29 · ×${CARD_MULT}</span>`
-      + '<span class="bc-zones"><i class="lose">≤10</i><i class="win">11–29 ✓</i><i class="lose">≥30</i></span>' + extras;
+    el.innerHTML = `<span class="bc-title">Ваша ставка</span><span class="bc-main">Сумма 11–24 · ×${CARD_MULT}</span>`
+      + '<span class="bc-zones"><i class="lose">≤10</i><i class="win">11–24 ✓</i><i class="lose">≥25</i></span>' + extras;
     b.appendChild(el);
     cellEls.bet = el;
   } else if (game === 'chest') {
@@ -1833,7 +1833,7 @@ function renderBetInfo() {
   $('#betInfo').innerHTML = total
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
     : S.game === 'cards' ? 'Выберите фишку и нажмите на поле ставки' : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
-  $('#limitInfo').textContent = S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–29' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
+  $('#limitInfo').textContent = S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–24' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
     : isInf() ? 'Без лимита · одна цифра за раунд'
     : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
 }
@@ -1882,11 +1882,11 @@ function renderStatus() {
 function renderCardsTray() {
   if (S.game !== 'cards') return;
   const lr = S.lastRoll, box = $('#crCards'), tot = $('#crTotal'), zone = $('#crZone');
-  if (!lr) { box.innerHTML = ''; box.dataset.k = ''; tot.textContent = '—'; tot.className = ''; zone.textContent = 'нужно 11–29'; return; }
+  if (!lr) { box.innerHTML = ''; box.dataset.k = ''; tot.textContent = '—'; tot.className = ''; zone.textContent = 'нужно 11–24'; return; }
   const o = lr.outcome, sum = cardsTotal(o), win = cardsWin(sum), key = o.cards.map(c => c.r + c.s + c.v).join();
   if (box.dataset.k !== key) { box.innerHTML = o.cards.map(c => cardHtml(c)).join(''); box.dataset.k = key; }
   tot.textContent = sum; tot.className = win ? 'win' : 'lose';
-  zone.textContent = win ? `Победа ×${CARD_MULT}` : sum < CARD_MIN ? 'Недобор: нужно 11+' : 'Перебор: нужно до 29';
+  zone.textContent = win ? `Победа ×${CARD_MULT}` : sum < CARD_MIN ? 'Недобор: нужно 11+' : 'Перебор: нужно до 24';
 }
 function renderColorTray() {
   if (S.game !== 'color') return;
