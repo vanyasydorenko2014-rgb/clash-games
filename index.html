@@ -1,0 +1,2252 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05070a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Luck Cube, Color Clash, Golden Pick и Card Roll — играйте против дилера или с друзьями за одним столом.">
+<title>Clash Game</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070a; --text:#f4f1ea; --muted:#8d97a1; --muted-2:#5d6670;
+  --glass:rgba(255,255,255,.045); --glass-2:rgba(255,255,255,.07); --stroke:rgba(255,255,255,.08); --stroke-2:rgba(255,255,255,.14);
+  --gold-1:#fbecc0; --gold-2:#e2be6a; --gold-3:#a8832f; --gold-line:rgba(226,190,106,.38);
+  --gold-grad:linear-gradient(180deg,#fff1c6 0%,#e8c573 48%,#b08936 100%);
+  --ruby:#c0283d; --win:#3ddc97; --lose:#ff6b6b;
+  --felt-grad:radial-gradient(120% 90% at 50% 0%,#1a7456 0%,#0f4f3b 45%,#08301f 100%);
+  --sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --die:clamp(52px,14.5vw,74px);
+  --r-lg:24px; --r-md:16px; --r-sm:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:var(--sans);color:var(--text);background:var(--bg);
+  background-image:
+    radial-gradient(1100px 620px at 50% -12%,rgba(30,120,88,.34),transparent 62%),
+    radial-gradient(760px 520px at 105% 105%,rgba(226,190,106,.10),transparent 60%),
+    radial-gradient(680px 520px at -5% 100%,rgba(18,84,62,.22),transparent 60%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-x:hidden;
+}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;touch-action:manipulation}
+input{font:inherit;font-size:16px;color:var(--text)}
+svg{display:block}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.wordmark,.brand-mini,.tot,.ri-main.idle,.modal-card h2,.cmult,.orb{font-feature-settings:"lnum" 1;font-variant-numeric:lining-nums}
+.gold-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.screen{display:none;position:relative;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ---------- Кнопки ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 20px;border-radius:var(--r-md);font-weight:700;font-size:15px;letter-spacing:.01em;transition:transform .15s ease,opacity .2s,box-shadow .2s,background .2s;white-space:nowrap;position:relative}
+.btn svg{width:18px;height:18px}
+.btn:active:not(:disabled){transform:scale(.975)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn-gold{background:linear-gradient(180deg,#f9e7b0 0%,#e2be6a 46%,#b48c3b 100%);color:#241904;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 0 rgba(0,0,0,.18),0 12px 30px -10px rgba(226,190,106,.6)}
+.btn-gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:sheen 5s ease-in-out infinite}
+.btn-gold:disabled::after{display:none}
+@keyframes sheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.btn-ghost{background:var(--glass);border:1px solid var(--stroke-2);color:var(--text);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.btn-ghost:hover:not(:disabled){background:var(--glass-2)}
+.btn-block{width:100%}
+.btn-play{height:62px;font-size:19px;letter-spacing:.04em;border-radius:20px}
+.icon-btn{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--stroke);flex:none;position:relative;color:var(--text);transition:background .2s}
+.icon-btn:hover{background:var(--glass-2)}
+.icon-btn svg{width:19px;height:19px}
+
+.coin{display:inline-block;width:18px;height:18px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#fff6d6 0%,#e7c571 42%,#9a772a 100%);box-shadow:inset 0 0 0 1.5px rgba(80,55,10,.35),0 1px 2px rgba(0,0,0,.4)}
+.coin.sm{width:12px;height:12px}
+.bal-pill{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px 0 10px;border-radius:999px;background:linear-gradient(180deg,rgba(226,190,106,.16),rgba(226,190,106,.05));border:1px solid var(--gold-line);font-variant-numeric:tabular-nums;flex:none}
+.bal-pill b{font-weight:800;font-size:16px;color:var(--gold-1)}
+.bal-pill.big{height:46px}.bal-pill.big b{font-size:18px}
+
+.avatar{--pc:#e2be6a;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:800;font-size:16px;color:#0b0d10;
+  background:linear-gradient(145deg,rgba(255,255,255,.45),rgba(0,0,0,.2)),var(--pc);box-shadow:inset 0 0 0 2px rgba(255,255,255,.25),0 4px 12px rgba(0,0,0,.35)}
+.avatar.sm{width:26px;height:26px;font-size:12px}
+.avatar.empty{background:transparent;border:1.5px dashed var(--stroke-2);box-shadow:none;color:var(--muted)}
+.avatar.empty svg{width:18px;height:18px}
+.avatar.sm.empty svg{width:13px;height:13px}
+
+/* ---------- Кубики ---------- */
+.dice-row{display:flex;justify-content:center;gap:clamp(18px,6vw,36px);perspective:900px}
+.die-slot{width:var(--die);height:var(--die);position:relative}
+.die-shadow{position:absolute;left:6%;right:6%;bottom:-14px;height:14px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(5px)}
+.die-wrap{position:absolute;inset:0;transform-style:preserve-3d}
+.die{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 1.8s cubic-bezier(.15,.65,.25,1)}
+.die-slot:nth-child(2) .die{transition-duration:1.95s}
+.die-slot:nth-child(3) .die{transition-duration:2.1s}
+.tossing .die-wrap{animation:toss 2.1s cubic-bezier(.3,.6,.4,1)}
+.tossing .die-shadow{animation:shadow 2.1s cubic-bezier(.3,.6,.4,1)}
+@keyframes toss{0%{transform:translateY(0)}16%{transform:translateY(-50px) scale(1.1)}36%{transform:translateY(0)}50%{transform:translateY(-18px)}63%{transform:translateY(0)}74%{transform:translateY(-6px)}84%,100%{transform:translateY(0)}}
+@keyframes shadow{0%{transform:scale(1);opacity:1}16%{transform:scale(.5);opacity:.35}36%{transform:scale(1);opacity:1}50%{transform:scale(.8);opacity:.7}63%,100%{transform:scale(1);opacity:1}}
+.face{position:absolute;inset:0;border-radius:18%;background:radial-gradient(circle at 28% 22%,#ffffff 0%,#f3eee3 55%,#d8cfbb 100%);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:15%;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),inset 0 -6px 10px rgba(0,0,0,.14),inset 0 3px 6px rgba(255,255,255,.8);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.pip{width:74%;height:74%;margin:auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4a4a,#050505);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.pip.red{width:104%;height:104%;background:radial-gradient(circle at 35% 30%,#ff6a7a,#9b0d22)}
+.f1{transform:translateZ(calc(var(--die) / 2))}
+.f6{transform:rotateY(180deg) translateZ(calc(var(--die) / 2))}
+.f2{transform:rotateY(90deg) translateZ(calc(var(--die) / 2))}
+.f5{transform:rotateY(-90deg) translateZ(calc(var(--die) / 2))}
+.f3{transform:rotateX(90deg) translateZ(calc(var(--die) / 2))}
+.f4{transform:rotateX(-90deg) translateZ(calc(var(--die) / 2))}
+.hero-dice{--die:clamp(48px,13vw,62px);padding:18px 0 22px}
+.hero-dice .die{transition:none;animation:idle 14s linear infinite}
+.hero-dice .die-slot:nth-child(1) .die{animation-duration:16s;animation-delay:-3s}
+.hero-dice .die-slot:nth-child(3) .die{animation-duration:12s;animation-delay:-7s;animation-direction:reverse}
+.hero-dice .die-wrap{animation:float 4s ease-in-out infinite}
+.hero-dice .die-slot:nth-child(2) .die-wrap{animation-delay:-1.3s}
+.hero-dice .die-slot:nth-child(3) .die-wrap{animation-delay:-2.6s}
+@keyframes idle{from{transform:rotateX(-20deg) rotateY(0) rotateZ(0)}to{transform:rotateX(340deg) rotateY(360deg) rotateZ(360deg)}}
+@keyframes float{50%{transform:translateY(-10px)}}
+
+/* ---------- Цветные сферы (Color Clash) ---------- */
+.sphere{border-radius:50%;flex:none}
+.sphere.red{background:radial-gradient(circle at 35% 30%,#ff8a98,#c0283d 55%,#5e0b19)}
+.sphere.blue{background:radial-gradient(circle at 35% 30%,#9cc0ff,#2f6fe0 55%,#0f2a5f)}
+.sphere.gold{background:radial-gradient(circle at 35% 30%,#fff3cc,#e2be6a 55%,#7f5a1b)}
+.hero-orbs{display:none;justify-content:center;gap:clamp(18px,6vw,32px);padding:22px 0 24px}
+.hero-orbs .sphere{width:clamp(50px,13vw,62px);height:clamp(50px,13vw,62px);box-shadow:inset 0 -8px 16px rgba(0,0,0,.35),0 14px 30px -8px rgba(0,0,0,.7);animation:float 4s ease-in-out infinite}
+.hero-orbs .sphere:nth-child(2){animation-delay:-1.3s}
+.hero-orbs .sphere:nth-child(3){animation-delay:-2.6s}
+.sel-color .hero-orbs{display:flex}
+.sel-color .hero-dice-menu{display:none}
+
+/* ---------- Регистрация и меню ---------- */
+.menu-wrap{width:100%;max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:18px;flex:1}
+.menu-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.me{display:flex;align-items:center;gap:12px;min-width:0}
+.me-name{display:flex;align-items:center;gap:6px;font-weight:800;font-size:17px;min-width:0}
+.me-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-name button{color:var(--muted);padding:4px}
+.me-name button svg{width:15px;height:15px}
+.hero{text-align:center;padding:6px 0 4px}
+.wordmark{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:0 14px;font-family:var(--serif);font-weight:800;line-height:1.05}
+.wordmark .w3{font-size:72px;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 18px rgba(226,190,106,.25))}
+.wordmark .wtxt{font-size:38px;letter-spacing:.14em;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wordmark .wc{font-size:clamp(30px,9vw,44px);letter-spacing:.1em}
+.tagline{margin-top:12px;font-size:12px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.divider{display:flex;align-items:center;gap:12px;color:var(--gold-2);margin:14px auto 0;width:180px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-line),transparent)}
+.divider i{width:6px;height:6px;transform:rotate(45deg);background:var(--gold-2)}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px;border-radius:var(--r-lg);text-align:left;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--stroke);transition:transform .2s ease,border-color .2s,background .2s,box-shadow .2s}
+.game-card:hover{transform:translateY(-2px)}
+.game-card.sel{border-color:var(--gold-2);background:linear-gradient(160deg,rgba(26,116,86,.5),rgba(8,48,31,.45));box-shadow:0 0 0 1px var(--gold-2),0 16px 40px -16px rgba(226,190,106,.45)}
+.gc-ico{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(160deg,rgba(226,190,106,.22),rgba(226,190,106,.05));border:1px solid var(--gold-line);color:var(--gold-1)}
+.gc-ico svg{width:24px;height:24px}
+.gc-ico.trio{display:flex;align-items:center;justify-content:center;gap:0}
+.gc-ico.trio .sphere{width:16px;height:16px;margin:0 -2px;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.game-card b{font-size:16px;font-weight:800}
+.game-card small{font-size:12.5px;color:var(--muted);line-height:1.35;margin-top:-6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--r-md);background:rgba(0,0,0,.35);border:1px solid var(--stroke)}
+.seg-btn{height:42px;padding:0 6px;white-space:nowrap;border-radius:12px;font-weight:700;font-size:clamp(12.5px,3.5vw,14px);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s,color .2s}
+.seg-btn .inf{font-size:20px;line-height:1;font-weight:600}
+.seg-btn.active{background:linear-gradient(180deg,rgba(226,190,106,.22),rgba(226,190,106,.08));color:var(--gold-1);box-shadow:inset 0 0 0 1px var(--gold-line)}
+.seg-hint,.play-hint{font-size:13px;color:var(--muted);text-align:center;margin-top:-8px;line-height:1.4}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quick-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--stroke);font-weight:700;font-size:14px;position:relative;transition:background .2s}
+.quick-btn:hover{background:var(--glass-2)}
+.quick-btn svg{width:20px;height:20px;color:var(--gold-2)}
+.dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--lose);box-shadow:0 0 0 3px rgba(255,107,107,.2)}
+.reg-card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--stroke);border-radius:var(--r-lg);padding:22px;display:flex;flex-direction:column;gap:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.field{width:100%;height:54px;padding:0 16px;border-radius:var(--r-md);border:1px solid var(--stroke-2);background:rgba(0,0,0,.35);outline:none;transition:border-color .2s,box-shadow .2s}
+.field:focus{border-color:var(--gold-2);box-shadow:0 0 0 4px rgba(226,190,106,.12)}
+.invite-banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(226,190,106,.18),rgba(226,190,106,.04));border:1px solid var(--gold-line);font-size:14px;font-weight:600}
+.invite-banner svg{width:22px;height:22px;color:var(--gold-1);flex:none}
+.center-v{justify-content:center}
+
+/* ---------- Игровой экран ---------- */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));background:rgba(5,7,10,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--stroke)}
+.tb-brand{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15;padding-left:4px}
+.brand-mini{font-family:var(--serif);font-weight:800;font-size:18px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-invite{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:13px;font-weight:700;font-size:14px;color:var(--gold-1);background:rgba(226,190,106,.1);border:1px solid var(--gold-line);flex:none}
+.btn-invite svg{width:18px;height:18px}
+.badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;background:var(--lose);font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px;color:#fff}
+
+.game{flex:1;display:flex;gap:18px;justify-content:center;align-items:flex-start;width:100%;max-width:1120px;margin:0 auto;padding:14px 16px calc(16px + env(safe-area-inset-bottom))}
+.table{flex:1;max-width:660px;min-width:0;display:flex;flex-direction:column;gap:12px}
+
+.felt{position:relative;border-radius:28px;padding:18px 14px 14px;background:var(--felt-grad);border:1px solid rgba(226,190,106,.45);
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,.22),inset 0 0 0 6px rgba(226,190,106,.18),inset 0 0 80px rgba(0,0,0,.5),0 30px 70px -20px rgba(0,0,0,.8);overflow:hidden}
+.felt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E")}
+.felt>*{position:relative}
+.tray{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0 4px}
+.tray-color{display:none}
+.g-color .tray-dice{display:none}
+.g-color .tray-color{display:flex}
+.roll-info{text-align:center;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding-top:12px}
+.ri-main{font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.ri-main.idle{font-family:var(--serif);font-size:18px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.02em}
+.ri-main.rolling{font-family:var(--serif);font-size:20px;color:var(--gold-1);animation:blink .7s ease-in-out infinite alternate}
+@keyframes blink{to{opacity:.45}}
+.dv{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:linear-gradient(180deg,#fff,#e9e3d5);color:#111;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.op{color:rgba(255,255,255,.5);font-weight:600}
+.tot{font-family:var(--serif);font-size:30px;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.trip{background:linear-gradient(180deg,#e0485c,#9b1328);color:#fff;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;letter-spacing:.12em}
+.cpill{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:800;padding:6px 14px 6px 6px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);text-transform:uppercase;letter-spacing:.08em}
+.cpill .sphere{width:26px;height:26px}
+.ri-sub{font-size:13px;color:rgba(255,255,255,.62)}
+.ri-sub b{color:#fff}
+.ri-res{margin-top:2px;font-weight:800;font-size:15px}
+.ri-res.win{color:var(--win)}.ri-res.lose{color:#ff9b9b}
+.history{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.history span{font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.28);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
+.history span b{color:#fff;margin-left:5px}
+.history span.t{background:rgba(192,40,61,.55);color:#fff}
+.history .sphere{width:16px;height:16px;padding:0;border:none;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.history .sphere.duel{box-shadow:0 0 0 2px var(--gold-1),0 1px 3px rgba(0,0,0,.5)}
+
+.orb{width:clamp(100px,28vw,128px);height:clamp(100px,28vw,128px);border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:clamp(28px,8vw,36px);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.45);transition:box-shadow .15s;
+  box-shadow:inset 0 -12px 26px rgba(0,0,0,.38),inset 0 10px 20px rgba(255,255,255,.3),0 0 0 5px rgba(0,0,0,.25),0 0 0 6px rgba(226,190,106,.35),0 0 46px var(--glow,rgba(226,190,106,.25))}
+.orb.idle{background:conic-gradient(#d6334a 0 33.3%,#3b78e7 0 66.6%,#e8c06a 0);animation:orbspin 10s linear infinite}
+.orb.red{background:radial-gradient(circle at 35% 30%,#ff8a98,#c0283d 55%,#5e0b19);--glow:rgba(224,64,88,.65)}
+.orb.blue{background:radial-gradient(circle at 35% 30%,#9cc0ff,#2f6fe0 55%,#0f2a5f);--glow:rgba(70,130,240,.65)}
+.orb.gold{background:radial-gradient(circle at 35% 30%,#fff3cc,#e2be6a 55%,#7f5a1b);--glow:rgba(226,190,106,.75);color:#2a1d00;text-shadow:none}
+@keyframes orbspin{to{transform:rotate(360deg)}}
+.duel{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:800;color:#2a1d00;background:var(--gold-grad);box-shadow:0 0 24px rgba(226,190,106,.55);animation:duelpulse 1.4s ease-in-out infinite;text-align:center}
+@keyframes duelpulse{50%{box-shadow:0 0 6px rgba(226,190,106,.3)}}
+
+.status{display:flex;justify-content:center;margin:12px 0 12px}
+.status span{font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(226,190,106,.25);color:var(--gold-1);text-align:center}
+.status.urgent span{color:#fff;background:rgba(192,40,61,.6);border-color:rgba(255,120,130,.6)}
+
+.board{display:grid;grid-template-columns:auto repeat(5,1fr);gap:7px;user-select:none;-webkit-user-select:none}
+.board.color{grid-template-columns:repeat(3,1fr);gap:10px}
+.board.dice{grid-template-columns:repeat(4,1fr);gap:10px}
+.mult{display:flex;align-items:center;justify-content:center;min-width:34px;padding:0 3px;border-radius:12px;font-size:12px;font-weight:800;color:var(--gold-1);background:rgba(0,0,0,.28);border:1px solid var(--gold-line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell{position:relative;aspect-ratio:1.12;border-radius:14px;border:1px solid rgba(226,190,106,.32);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.12));display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:background .2s,border-color .2s,box-shadow .25s,transform .12s,filter .12s;-webkit-touch-callout:none}
+.cell:hover{border-color:rgba(226,190,106,.6)}
+.cell:active{transform:scale(.96)}
+.board.locked .cell{cursor:default}
+.board.locked .cell:active{transform:none}
+.num{display:grid;place-items:center;width:1.95em;height:1.95em;border-radius:50%;font-weight:800;font-size:clamp(15px,4.3vw,21px);font-variant-numeric:tabular-nums;border:1.5px solid rgba(255,255,255,.2);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)}
+.num.red{background:radial-gradient(circle at 35% 30%,#e3485d,#8f1023)}
+.num.black{background:radial-gradient(circle at 35% 30%,#3a3f45,#0b0d10)}
+.cell.triple{grid-column:span 2;aspect-ratio:auto;background:linear-gradient(135deg,rgba(192,40,61,.38),rgba(0,0,0,.15));gap:2px}
+.cell.triple .lbl{font-size:clamp(24px,6.5vw,32px);font-weight:800;letter-spacing:.02em;line-height:1;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cell.triple .sub{font-size:clamp(8.5px,2.4vw,10px);white-space:nowrap;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.6)}
+.cell .stake{position:absolute;z-index:2;bottom:4px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:3px;background:linear-gradient(180deg,#fbe9b6,#d9b45f);color:#241904;font-size:clamp(9px,2.5vw,11.5px);font-weight:800;padding:2px 7px 2px 3px;border-radius:999px;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+.cell .stake::before{content:"";width:10px;height:10px;border-radius:50%;background:repeating-conic-gradient(#fff 0 30deg,#b0263a 30deg 60deg);box-shadow:inset 0 0 0 2px #b0263a}
+.cell.has .stake{display:inline-flex}
+.cell.has{border-color:var(--gold-2);background:linear-gradient(180deg,rgba(226,190,106,.16),rgba(0,0,0,.1))}
+.cell .why{position:absolute;z-index:2;top:3px;right:5px;font-size:9px;color:var(--gold-1);font-weight:800;max-width:72%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cell .marks{position:absolute;z-index:2;top:5px;left:5px;display:flex;gap:2px;flex-wrap:wrap;max-width:50%}
+.cell .marks i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.45)}
+.cell.hit{border-color:var(--gold-1);background:linear-gradient(180deg,rgba(226,190,106,.24),rgba(226,190,106,.06));box-shadow:0 0 0 1px var(--gold-2),0 0 22px rgba(226,190,106,.4)}
+.cell.won{border-color:var(--win);background:linear-gradient(180deg,rgba(61,220,151,.3),rgba(61,220,151,.06));box-shadow:0 0 0 1px var(--win),0 0 26px rgba(61,220,151,.45);animation:pulse .9s ease-in-out 3}
+.cell.lost{border-color:rgba(255,107,107,.65)}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.ccell{aspect-ratio:.86;border-radius:20px;border-color:rgba(255,255,255,.16);gap:4px}
+.ccell::before{content:"";position:absolute;inset:0;background:var(--cg);transition:filter .12s}
+.ccell.red{--cg:linear-gradient(160deg,#e0485c,#7d0d1f)}
+.ccell.blue{--cg:linear-gradient(160deg,#4a86f0,#132f6e)}
+.ccell.gold{--cg:linear-gradient(160deg,#f6dd8f,#9a7426);color:#241904}
+.ccell>span:not(.stake):not(.why):not(.marks){position:relative;z-index:1}
+.ccell .cname{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.92}
+.ccell .cmult{font-family:var(--serif);font-size:clamp(34px,10vw,48px);font-weight:800;line-height:1}
+.ccell .cchance{font-size:11px;font-weight:600;opacity:.75}
+.ccell.has{border-color:var(--gold-1);box-shadow:0 0 0 2px var(--gold-2)}
+.ccell.lit{transform:scale(1.05);border-color:#fff;box-shadow:0 0 0 3px #fff,0 0 34px rgba(255,255,255,.55)}
+.ccell.lit::before{filter:brightness(1.35)}
+.ccell .stake{bottom:8px}
+
+.dock{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:var(--r-lg);background:rgba(12,16,21,.78);border:1px solid var(--stroke);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 20px 50px -20px rgba(0,0,0,.8)}
+.betbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.betbar b{color:var(--text);font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:clamp(6px,2vw,12px);justify-content:center}
+.chip{--c:#2e7d32;position:relative;width:clamp(46px,12.6vw,56px);aspect-ratio:1;border-radius:50%;font-weight:800;font-size:12.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);
+  background:radial-gradient(circle,var(--c) 0 56%,transparent 57%),repeating-conic-gradient(from 7.5deg,#f6f1e6 0 15deg,var(--c) 15deg 45deg);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.45),0 10px 18px -6px rgba(0,0,0,.6);transition:transform .15s ease,box-shadow .15s}
+.chip::before{content:"";position:absolute;inset:21%;border-radius:50%;border:1.5px dashed rgba(255,255,255,.55)}
+.chip span{position:relative}
+.chip.sel{transform:translateY(-7px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 0 0 3px var(--gold-2),0 14px 22px -6px rgba(226,190,106,.55)}
+.dock-row{display:flex;gap:8px}
+.tool{width:52px;height:52px;border-radius:var(--r-md);display:grid;place-items:center;background:var(--glass);border:1px solid var(--stroke);flex:none;transition:background .2s,opacity .2s}
+.tool:hover:not(:disabled){background:var(--glass-2)}
+.tool svg{width:20px;height:20px}
+.tool:disabled{opacity:.3;cursor:not-allowed}
+.dock-row .btn{flex:1;min-width:0}
+
+.side{width:310px;flex:none;display:flex;flex-direction:column;gap:14px;background:rgba(12,16,21,.72);border:1px solid var(--stroke);border-radius:var(--r-lg);padding:16px;position:sticky;top:82px;max-height:calc(100vh - 100px);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.side-head{display:flex;justify-content:space-between;align-items:center}
+.close-side{display:none}
+.seats{display:flex;flex-direction:column;gap:8px}
+.seat{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--stroke);text-align:left;width:100%}
+.seat.me{border-color:var(--gold-line)}
+.seat.empty{border-style:dashed;background:transparent;transition:background .2s}
+.seat.empty:hover:not(:disabled){background:var(--glass)}
+.seat.empty:disabled{cursor:default;opacity:.6}
+.seat-info{flex:1;min-width:0}
+.seat-name{display:flex;align-items:center;gap:5px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat-name svg{width:14px;height:14px;color:var(--gold-2);flex:none}
+.seat.empty .seat-name{color:var(--muted);font-weight:600}
+.seat-bal{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--gold-1);font-weight:700;font-variant-numeric:tabular-nums}
+.seat.empty .seat-bal{color:var(--gold-2);font-weight:600}
+.tag{font-size:11px;font-weight:800;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted);letter-spacing:.03em}
+.tag.ok{background:rgba(61,220,151,.14);color:var(--win)}
+.seats-mini{display:none;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.seats-mini::-webkit-scrollbar{display:none}
+.pm{flex:none;display:flex;align-items:center;gap:7px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--glass);border:1px solid var(--stroke);font-size:12.5px;font-weight:600;white-space:nowrap}
+.pm b{color:var(--gold-1);font-variant-numeric:tabular-nums}
+.pm.ready{border-color:rgba(61,220,151,.55)}
+.pm.add{color:var(--gold-1);border-style:dashed;border-color:var(--gold-line)}
+.chat{flex:1;min-height:180px;display:flex;flex-direction:column;gap:10px}
+.chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding-right:4px;min-height:120px}
+.chat-row{line-height:1.4;overflow-wrap:anywhere}
+.chat-row b{margin-right:5px}
+.chat-row.sys{color:var(--muted);font-size:12px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.03)}
+.chat-form{display:flex;gap:8px}
+.chat-form input{flex:1;min-width:0;height:46px;padding:0 14px;border-radius:14px;border:1px solid var(--stroke-2);background:rgba(0,0,0,.35);outline:none}
+.chat-form input:focus{border-color:var(--gold-2)}
+.chat-form .btn{height:46px;width:46px;padding:0}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:29;display:none;backdrop-filter:blur(2px)}
+.backdrop.open{display:block}
+
+@media (min-width:900px){
+  #btnChat{display:none!important}
+  .cell{aspect-ratio:1.85}
+  .cell.triple{aspect-ratio:auto}
+  .ccell{aspect-ratio:1.25}
+  #btnForce{height:42px}
+  .dock{position:sticky;bottom:12px;z-index:10}
+  .felt{padding:16px 16px 16px}
+}
+@media (max-width:899px){
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:74vh;height:74dvh;max-height:none;border-radius:26px 26px 0 0;background:#0b0f14;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:30;box-shadow:0 -20px 50px rgba(0,0,0,.6)}
+  .side.open{transform:none}
+  .close-side{display:grid}
+  .seats-mini{display:flex}
+  .game{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+  .dock{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:10}
+  #btnInvite{display:none!important}
+  .brand-mini{font-size:15px;letter-spacing:.03em}
+}
+@media (max-width:400px){
+  .brand-mini{font-size:15px}
+  .felt{padding:14px 10px 10px;border-radius:22px}
+  .board{gap:5px}
+  .dock{padding:12px}
+  .tool{width:46px}
+}
+
+/* ---------- Аватар ---------- */
+.avatar{overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.editable{cursor:pointer;overflow:visible;position:relative}
+.avatar.editable img{border-radius:50%}
+.avatar.editable::after{content:"✎";position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--gold-2);color:#241904;font-size:11px;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.draw-wrap{align-self:center;width:min(100%,280px);aspect-ratio:1;border-radius:50%;overflow:hidden;border:2px solid var(--gold-line);background:linear-gradient(145deg,rgba(255,255,255,.45),rgba(0,0,0,.2)),#e8c573;touch-action:none}
+#drawCanvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.swatches{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.sw{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:var(--c)}
+.sw.sel{box-shadow:0 0 0 3px var(--gold-2);transform:scale(1.1)}
+.tools-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tools-row .btn{height:42px;padding:0 14px;font-size:14px}
+.tools-row .btn.on{background:rgba(226,190,106,.2);border-color:var(--gold-2)}
+
+/* ---------- Golden Pick ---------- */
+.games .game-card[data-game=chest],.games .game-card[data-game=cards]{grid-column:span 2;flex-direction:row;align-items:center;gap:14px}
+.gc-text{display:flex;flex-direction:column;gap:3px}
+.gc-text small{margin-top:0}
+.hero-chests{display:none;justify-content:center;align-items:flex-end;gap:clamp(14px,5vw,26px);padding:22px 0 24px}
+.hero-chests svg{width:clamp(58px,17vw,76px);height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6));animation:float 4s ease-in-out infinite}
+.hero-chests svg:nth-child(2){animation-delay:-1.3s;width:clamp(68px,20vw,90px)}
+.hero-chests svg:nth-child(3){animation-delay:-2.6s}
+.sel-chest .hero-chests{display:flex}
+.sel-chest .hero-dice-menu{display:none}
+.g-chest .tray-dice,.g-chest .tray-color{display:none}
+.board.chest{grid-template-columns:repeat(5,1fr);gap:6px}
+.board.chest .cell{aspect-ratio:.66;justify-content:flex-start;padding-top:12px;gap:3px}
+.kcell .chest-art{width:80%;position:relative;z-index:1}
+.kcell .chest-art svg{width:100%;height:auto}
+.kcell .art-open{display:none}
+.kcell.open .art-open{display:block;animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+.kcell.open .art-closed{display:none}
+.kcell .cres{position:relative;z-index:1;font-size:clamp(10px,2.9vw,13px);font-weight:800;color:rgba(255,255,255,.55);min-height:1.2em;white-space:nowrap}
+.kcell.k-big .cres{color:var(--gold-1)}
+.kcell.k-small .cres{color:#cfe8ff}
+.kcell.k-big .art-open{filter:drop-shadow(0 0 10px rgba(255,214,102,.95))}
+.kcell.k-small .art-open{filter:drop-shadow(0 0 7px rgba(150,200,255,.75))}
+.kcell.open.k-empty .art-open{opacity:.5}
+@keyframes pop{from{transform:scale(.7)}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) translateY(-3px)}75%{transform:rotate(8deg) translateY(-3px)}}
+.board.opening .kcell .chest-art{animation:shake .42s ease-in-out infinite}
+.board.opening .kcell:nth-child(2) .chest-art{animation-delay:-.1s}
+.board.opening .kcell:nth-child(3) .chest-art{animation-delay:-.2s}
+.board.opening .kcell:nth-child(4) .chest-art{animation-delay:-.3s}
+.board.opening .kcell:nth-child(5) .chest-art{animation-delay:-.15s}
+.history .chest-h{display:inline-flex;gap:4px;padding:6px 9px}
+.chest-h i{width:9px;height:9px;border-radius:50%;background:#2a2f35}
+.chest-h i.big{background:var(--gold-2);box-shadow:0 0 6px rgba(226,190,106,.8)}
+.chest-h i.small{background:#8fc3ff}
+
+/* ---------- Card Roll ---------- */
+.hero-cards{display:none;justify-content:center;align-items:flex-end;padding:22px 0 26px}
+.hero-cards .pcw{--cw:clamp(56px,16vw,70px);margin:0 -10px;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 12px 16px rgba(0,0,0,.55))}
+.hero-cards .pcw:nth-child(2){animation-delay:-1.3s;margin-bottom:10px}
+.hero-cards .pcw:nth-child(3){animation-delay:-2.6s}
+.hero-cards .pv{display:none}
+.sel-cards .hero-cards{display:flex}
+.sel-cards .hero-dice-menu{display:none}
+.g-cards .tray-dice,.g-cards .tray-color{display:none}
+.tray-cards{display:none;gap:14px}
+.g-cards .tray-cards{display:flex}
+.cr-top{display:flex;align-items:center;justify-content:center;gap:clamp(22px,8vw,46px)}
+#cardDieRow{--die:clamp(52px,14.5vw,70px)}
+#cardDieRow .die{transition-duration:.9s}
+#cardDieRow .tossing .die-wrap,#cardDieRow .tossing .die-shadow{animation-duration:.95s}
+.cr-sum{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:104px}
+.cr-sum small{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.cr-sum b{font-family:var(--serif);font-size:clamp(40px,11.5vw,54px);line-height:1;font-weight:800;font-variant-numeric:lining-nums tabular-nums;color:var(--gold-1);font-feature-settings:"lnum" 1;transition:color .25s}
+.cr-sum b.win{color:var(--win)}
+.cr-sum b.lose{color:var(--lose)}
+.cr-sum b.bump{animation:bump .26s ease}
+@keyframes bump{50%{transform:scale(1.16)}}
+.cr-zone{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.72);white-space:nowrap}
+.cr-cards{--cw:clamp(38px,12.4vw,62px);width:100%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:8px 6px;min-height:calc(var(--cw) / .7 + 26px)}
+.cr-cards:empty{align-items:center}
+.cr-cards:empty::before{content:"Карты появятся здесь";font-size:12.5px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.04em}
+.pcw{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pc{position:relative;width:var(--cw);aspect-ratio:.7;border-radius:calc(var(--cw) * .14);background:linear-gradient(160deg,#fff 0%,#f1ebdb 100%);color:#15181c;font-size:calc(var(--cw) * .3);font-weight:800;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 6px 12px -4px rgba(0,0,0,.6)}
+.pc.red{color:#c0283d}
+.pc .tl{position:absolute;left:11%;top:6%;display:flex;flex-direction:column;align-items:center;line-height:1}
+.pc .tl i{font-style:normal;font-size:.78em;margin-top:.05em}
+.pc .ct{position:absolute;inset:0;display:grid;place-items:center;padding-top:.9em;font-size:1.75em;line-height:1}
+.pv{font-size:calc(var(--cw) * .25);font-weight:800;line-height:1.35;padding:0 8px;border-radius:999px;background:rgba(0,0,0,.32);color:rgba(255,255,255,.78);font-variant-numeric:tabular-nums}
+.pv.ace{background:var(--gold-grad);color:#241904}
+.pcw.deal{animation:deal .38s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes deal{from{opacity:0;transform:translateY(-28px) rotate(-10deg) scale(.7)}}
+.board.cards{grid-template-columns:1fr}
+.board.cards .cell{aspect-ratio:auto;min-height:112px;justify-content:flex-start;padding:14px 12px 36px;gap:6px}
+.bcell .bc-title{font-size:11.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.bcell .bc-main{font-family:var(--serif);font-size:clamp(22px,6.4vw,28px);font-weight:800;line-height:1.1;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bcell .bc-zones{display:flex;gap:4px;width:min(100%,300px)}
+.bcell .bc-zones i{font-style:normal;font-size:10.5px;font-weight:800;padding:3px 0;border-radius:6px;text-align:center;flex:1}
+.bcell .bc-zones i:nth-child(2){flex:2.2}
+.bcell .bc-zones .lose{background:rgba(255,107,107,.18);color:#ffb3b3}
+.bcell .bc-zones .win{background:rgba(61,220,151,.2);color:#8ff0c2}
+.history .cr-h{font-weight:800}
+.history .cr-h.win{color:var(--win);border-color:rgba(61,220,151,.4)}
+.history .cr-h.lose{color:#ff9b9b}
+
+/* ---------- Модальные окна ---------- */
+.modal{position:fixed;inset:0;background:rgba(2,4,6,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.open{display:flex;animation:fade .2s ease}
+@keyframes fade{from{opacity:0}}
+.modal-card{position:relative;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;background:linear-gradient(180deg,#121820,#0b0f14);border:1px solid var(--stroke-2);border-radius:26px;padding:26px 22px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 40px 80px rgba(0,0,0,.7);animation:rise .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes rise{from{transform:translateY(14px) scale(.98);opacity:0}}
+.modal-card.center{align-items:center;text-align:center}
+.modal-card h2{font-family:var(--serif);font-size:26px;font-weight:700;line-height:1.15}
+.modal-card p,.modal-card li{font-size:14px;line-height:1.55;color:rgba(244,241,234,.82)}
+.modal-card ul{padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.modal-card li b{color:var(--text)}
+.modal-card .x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--stroke)}
+.modal-card .x svg{width:16px;height:16px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.daily-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dtile{border-radius:14px;padding:10px 4px;text-align:center;background:var(--glass);border:1px solid var(--stroke);display:flex;flex-direction:column;align-items:center;gap:4px}
+.dtile:last-child{grid-column:span 2;background:linear-gradient(135deg,rgba(226,190,106,.16),rgba(226,190,106,.03));border-color:var(--gold-line)}
+.dtile .dd{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em}
+.dtile .da{font-weight:800;color:var(--gold-1);font-size:15px;font-variant-numeric:tabular-nums}
+.dtile .dc{height:18px;display:grid;place-items:center;color:var(--win)}
+.dtile .dc svg{width:16px;height:16px}
+.dtile.done{opacity:.5}
+.dtile.today{border-color:var(--gold-2);box-shadow:0 0 0 1px var(--gold-2),0 0 24px rgba(226,190,106,.35);background:linear-gradient(180deg,rgba(226,190,106,.22),rgba(226,190,106,.05))}
+.dtile.next{border-style:dashed;border-color:var(--gold-line)}
+.link-box{display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--r-md);background:rgba(0,0,0,.35);border:1px solid var(--stroke-2);font-size:13px;color:var(--gold-1);word-break:break-all;font-weight:600;user-select:all;-webkit-user-select:all}
+.link-box svg{width:18px;height:18px;flex:none;color:var(--gold-2)}
+.link-box.wait{color:var(--muted);user-select:none;-webkit-user-select:none}
+.link-box.err{color:#ff9b9b;word-break:normal}
+.hint{font-size:12.5px!important;color:var(--muted)!important}
+.spinner{width:54px;height:54px;border-radius:50%;border:3px solid rgba(226,190,106,.15);border-top-color:var(--gold-2);animation:spin .9s linear infinite;margin:6px 0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#toasts{position:fixed;left:50%;top:calc(74px + env(safe-area-inset-top));transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:calc(100% - 32px);max-width:420px}
+.toast{background:rgba(16,21,27,.94);border:1px solid var(--stroke-2);padding:12px 18px;border-radius:14px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:drop .25s cubic-bezier(.2,.8,.2,1);transition:opacity .3s,transform .3s}
+@keyframes drop{from{transform:translateY(-10px);opacity:0}}
+.toast.err{border-color:rgba(255,107,107,.6)}.toast.ok{border-color:rgba(61,220,151,.6)}
+.toast.hide{opacity:0;transform:translateY(-8px)}
+</style>
+</head>
+<body>
+
+<!-- Регистрация -->
+<div id="screen-register" class="screen">
+  <div class="menu-wrap center-v">
+    <section class="hero">
+      <div class="dice-row hero-dice" data-hero></div>
+      <h1 class="wordmark"><span class="wtxt wc">CLASH</span><span class="wtxt wc">GAME</span></h1>
+      <div class="divider"><i></i></div>
+    </section>
+    <div class="invite-banner" id="regInvite" hidden><i data-ic="users"></i><span>Вас пригласили за игровой стол. Представьтесь, чтобы сесть за него.</span></div>
+    <div class="reg-card">
+      <div class="eyebrow">Как вас зовут?</div>
+      <input id="regName" class="field" maxlength="16" placeholder="Ваше имя" autocomplete="nickname">
+      <button class="btn btn-gold btn-block" id="btnRegister">Начать игру</button>
+      <p class="muted" style="font-size:13px;text-align:center">Приветственный бонус — <b style="color:var(--gold-1)">1 000 фишек</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- Меню -->
+<div id="screen-menu" class="screen">
+  <div class="menu-wrap">
+    <header class="menu-top">
+      <div class="me">
+        <div class="avatar" id="menuAvatar"></div>
+        <div style="min-width:0"><div class="eyebrow">Игрок</div><div class="me-name"><span id="menuName"></span><button id="btnRename" title="Сменить имя" data-ic="pencil"></button></div></div>
+      </div>
+      <div class="bal-pill big"><span class="coin"></span><b id="menuBal"></b></div>
+    </header>
+    <section class="hero">
+      <div class="dice-row hero-dice hero-dice-menu" data-hero></div>
+      <div class="hero-orbs"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></div>
+      <div class="hero-chests"></div>
+      <div class="hero-cards"></div>
+      <h1 class="wordmark" id="wordmark"></h1>
+      <p class="tagline" id="tagline"></p>
+      <div class="divider"><i></i></div>
+    </section>
+    <div class="games" id="gamePick">
+      <button class="game-card" data-game="dice"><span class="gc-ico" data-ic="dices"></span><b>Luck Cube</b><small>Кубик · угадай число · ×2</small></button>
+      <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
+      <button class="game-card" data-game="chest"><span class="gc-ico" data-ic="chest"></span><span class="gc-text"><b>Golden Pick</b><small>5 сундуков · приз до ×5</small></span></button>
+      <button class="game-card" data-game="cards"><span class="gc-ico" data-ic="cards"></span><span class="gc-text"><b>Card Roll</b><small>Кубик · карты · сумма 11–29 · ×2</small></span></button>
+    </div>
+    <div class="seg" id="modeSeg">
+      <button class="seg-btn" data-inf="0">Обычная игра</button>
+      <button class="seg-btn" data-inf="1"><span class="inf">∞</span>Бесконечные фишки</button>
+    </div>
+    <p class="seg-hint" id="segHint"></p>
+    <button class="btn btn-gold btn-block btn-play" id="btnPlay">Играть</button>
+    <p class="play-hint">За столом можно пригласить друзей по ссылке — до 4 игроков</p>
+    <section class="quick">
+      <button class="quick-btn" id="btnDaily"><i data-ic="gift"></i><span>Бонус дня</span><span class="dot" id="dailyDot" hidden></span></button>
+      <button class="quick-btn" id="btnRules"><i data-ic="book"></i><span>Правила</span></button>
+    </section>
+  </div>
+</div>
+
+<!-- Игра -->
+<div id="screen-game" class="screen">
+  <header class="topbar">
+    <button class="icon-btn" id="btnBack" title="В меню" data-ic="back"></button>
+    <div class="tb-brand"><span class="brand-mini gold-text" id="tbTitle">LUCK CUBE</span><span class="tb-sub" id="tbSub"></span></div>
+    <button class="btn-invite" id="btnInvite" hidden><i data-ic="userplus"></i><span>Пригласить</span></button>
+    <div class="bal-pill"><span class="coin"></span><b id="bal">0</b></div>
+    <button class="icon-btn" id="btnSound" title="Звук"></button>
+    <button class="icon-btn" id="btnChat" title="Игроки и чат"><i data-ic="chat"></i><span class="badge" id="chatBadge" hidden></span></button>
+  </header>
+  <div class="game">
+    <main class="table">
+      <div class="seats-mini" id="playersMini"></div>
+      <section class="felt">
+        <div class="tray tray-dice">
+          <div class="dice-row" id="diceRow"></div>
+        </div>
+        <div class="tray tray-color">
+          <div class="orb idle" id="orb"></div>
+          <div class="duel" id="duel" hidden>⚔ Дуэль! Выигрыши этого раунда +50%</div>
+        </div>
+        <div class="tray tray-cards">
+          <div class="cr-top">
+            <div class="dice-row" id="cardDieRow"></div>
+            <div class="cr-sum"><small>Сумма</small><b id="crTotal">—</b><span class="cr-zone" id="crZone">нужно 11–29</span></div>
+          </div>
+          <div class="cr-cards" id="crCards"></div>
+        </div>
+        <div class="tray">
+          <div class="roll-info" id="rollInfo"></div>
+          <div class="history" id="history"></div>
+        </div>
+        <div class="status" id="status"><span></span></div>
+        <div class="board" id="board"></div>
+      </section>
+      <section class="dock">
+        <div class="betbar"><span id="betInfo"></span><span id="limitInfo"></span></div>
+        <div class="chips" id="chips"></div>
+        <div class="dock-row">
+          <button class="tool" id="btnUndo" title="Отменить последнюю фишку" data-ic="undo"></button>
+          <button class="tool" id="btnClear" title="Убрать все ставки" data-ic="trash"></button>
+          <button class="tool" id="btnRepeat" title="Повторить прошлые ставки" data-ic="repeat"></button>
+          <button class="btn btn-gold" id="btnMain">Играть</button>
+        </div>
+        <button class="btn btn-ghost btn-block" id="btnForce" hidden>Начать раунд, не дожидаясь всех</button>
+      </section>
+    </main>
+    <aside class="side" id="side">
+      <div class="side-head"><span class="eyebrow">За столом</span><button class="icon-btn close-side" id="btnCloseSide" data-ic="x"></button></div>
+      <div class="seats" id="players"></div>
+      <div class="chat">
+        <span class="eyebrow">Чат стола</span>
+        <div class="chat-log" id="chatLog"></div>
+        <form class="chat-form" id="chatForm"><input id="chatInput" maxlength="200" placeholder="Написать сообщение…" autocomplete="off"><button class="btn btn-gold" type="submit" data-ic="send"></button></form>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Ежедневный бонус -->
+<div class="modal" id="modalDaily"><div class="modal-card">
+  <button class="x" data-close data-ic="x"></button>
+  <div class="eyebrow">Ежедневная награда</div>
+  <h2>Бонус дня</h2>
+  <div class="daily-grid" id="dailyGrid"></div>
+  <p id="dailyText"></p>
+  <button class="btn btn-gold btn-block" id="btnClaim">Забрать</button>
+</div></div>
+
+<!-- Правила -->
+<div class="modal" id="modalRules"><div class="modal-card">
+  <button class="x" data-close data-ic="x"></button>
+  <div class="eyebrow">Как играть</div>
+  <h2 id="rulesTitle">Правила</h2>
+  <ul id="rulesDice">
+    <li>На столе числа <b>1–4</b>.</li>
+    <li>Выберите фишку и нажмите на цифру. За раунд ставка делается только на <b>одну цифру</b>, нажатие на другую переносит ставку на неё. Максимум — <b>10 000</b>.</li>
+    <li>Бросается <b>один кубик</b>. Если выпала ваша цифра — вы выиграли.</li>
+    <li>Выплата <b>×2</b>. Ставка входит в выплату: поставили 1 000 и угадали — получили 2 000.</li>
+  </ul>
+  <ul id="rulesCards" hidden>
+    <li>Выберите фишку (размер ставки) и нажмите на поле <b>«Ваша ставка»</b>. Ставка одна за раунд, лимита на сумму нет.</li>
+    <li>Нажмите «Бросить кубик»: выпадает число <b>от 1 до 6</b>. Столько карт вы получите из колоды в 52 карты.</li>
+    <li>Очки: <b>2–10</b> — по номиналу, <b>валет, дама, король — по 10</b>, <b>туз — 1 или 11</b> (значение туза выбирается случайно).</li>
+    <li>Сумма очков считается автоматически. Если она от <b>11 до 29</b> включительно — вы выиграли, выплата <b>×2</b>. Ставка входит в выплату: 100 → 200.</li>
+    <li>Сумма <b>10 и меньше</b> (недобор) или <b>30 и больше</b> (перебор) — ставка сгорает.</li>
+    <li>Пример: ставка 100, кубик 4, карты 3, 7, король и 5 → 3 + 7 + 10 + 5 = <b>25</b> → вы получаете 200.</li>
+  </ul>
+  <ul id="rulesChest" hidden>
+    <li>На столе <b>5 закрытых сундуков</b>.</li>
+    <li>Выберите фишку (размер ставки) и нажмите на <b>один сундук</b>. Нажатие на другой сундук переносит ставку на него. Лимита на сумму нет.</li>
+    <li>Нажмите «Открыть сундук» — сундуки открываются, и вы видите, что было внутри.</li>
+    <li>В каждом раунде прячутся <b>два приза</b>: один даёт <b>×2</b>, другой <b>×5</b>. Они лежат в случайных сундуках, остальные три — <b>пустые</b>, ставка в них сгорает.</li>
+    <li>Ставка входит в выплату: 100 на сундук с ×5 → 500.</li>
+    <li>Чтобы сыграть снова, нажмите на любой сундук — они закроются.</li>
+  </ul>
+  <ul id="rulesColor">
+    <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
+    <li>Выберите фишку и нажмите на цвет. За раунд ставка делается на <b>один цвет</b>, нажатие на другой цвет переносит ставку на него. Лимита на сумму нет.</li>
+    <li>Когда все сделали ставки, выпадает один цвет. Угадали — получаете выплату, не угадали — ставка сгорает.</li>
+    <li>Выплаты: <b>красный ×2</b>, <b>синий ×3</b>, <b>золотой ×5</b>. Ставка входит в выплату: 100 на синий → 300, чистая прибыль 200.</li>
+    <li>Шансы: красный ≈48%, синий ≈32%, золотой ≈19%. Чем выше множитель, тем реже выпадает цвет.</li>
+    <li><b>Дуэль:</b> если один цвет выпал два раунда подряд, следующий раунд становится Дуэлью. Все, кто угадает цвет в Дуэли, получают <b>бонус +50%</b> к выигрышу.</li>
+  </ul>
+  <ul>
+    <li><b>Бесконечные фишки:</b> режим без риска. Баланс не меняется, лимита на сумму ставки нет, есть фишки до 10M. За столом считается итог сессии.</li>
+    <li>Для старта вы получаете 1 000 фишек. Бонус дня растёт от 100 до 700 фишек за 7 дней подряд, потом цикл начинается заново. Если пропустить день, серия обнулится.</li>
+    <li><b>Игра с друзьями:</b> нажмите «Пригласить» за столом и отправьте ссылку. Друг откроет её и сядет за ваш стол, всего до 4 игроков. Когда все нажали «Готов», раунд начинается для всех одновременно. Если кто-то уже готов, остальным даётся 25 секунд.</li>
+  </ul>
+</div></div>
+
+<!-- Приглашение -->
+<div class="modal" id="modalInvite"><div class="modal-card">
+  <button class="x" data-close data-ic="x"></button>
+  <div class="eyebrow">Пригласить за стол</div>
+  <h2>Позовите друзей</h2>
+  <p>Отправьте ссылку другу: он откроет её и сразу сядет за ваш стол. Свободных мест: <b id="inviteSeats">3</b>.</p>
+  <div class="link-box" id="inviteBox"><i data-ic="link"></i><span id="inviteLink"></span></div>
+  <div class="row">
+    <button class="btn btn-gold" id="btnCopyLink"><i data-ic="copy"></i><span>Скопировать</span></button>
+    <button class="btn btn-ghost" id="btnShareLink"><i data-ic="share"></i><span>Отправить</span></button>
+  </div>
+  <button class="btn btn-ghost btn-block" id="btnInviteRetry" hidden>Попробовать снова</button>
+  <p class="hint" id="inviteHint">Вы хост этого стола. Не закрывайте вкладку и не блокируйте экран, пока идёт игра.</p>
+</div></div>
+
+<!-- Подключение -->
+<div class="modal" id="modalConnecting"><div class="modal-card center">
+  <div class="spinner"></div>
+  <h2 id="connTitle">Подключение…</h2>
+  <p id="connText" class="muted"></p>
+  <button class="btn btn-ghost btn-block" id="btnCancelConn">Отмена</button>
+</div></div>
+
+<!-- Рисование аватарки -->
+<div class="modal" id="modalAvatar"><div class="modal-card">
+  <button class="x" data-close data-ic="x"></button>
+  <div class="eyebrow">Профиль</div>
+  <h2>Нарисуйте аватарку</h2>
+  <div class="draw-wrap"><canvas id="drawCanvas" width="320" height="320"></canvas></div>
+  <div class="swatches" id="swatches"></div>
+  <div class="tools-row">
+    <button class="btn btn-ghost" data-size="6">Тонко</button>
+    <button class="btn btn-ghost" data-size="14">Средне</button>
+    <button class="btn btn-ghost" data-size="30">Толсто</button>
+    <button class="btn btn-ghost" id="btnEraser">Ластик</button>
+    <button class="btn btn-ghost" id="btnDrawClear">Очистить</button>
+  </div>
+  <button class="btn btn-gold btn-block" id="btnAvatarSave">Сохранить</button>
+  <button class="btn btn-ghost btn-block" id="btnAvatarReset">Вернуть букву</button>
+</div></div>
+
+<!-- Смена имени -->
+<div class="modal" id="modalName"><div class="modal-card">
+  <button class="x" data-close data-ic="x"></button>
+  <div class="eyebrow">Профиль</div>
+  <h2>Имя игрока</h2>
+  <input id="nameInput" class="field" maxlength="16">
+  <button class="btn btn-gold btn-block" id="btnSaveName">Сохранить</button>
+</div></div>
+
+<!-- Подтверждение -->
+<div class="modal" id="modalConfirm"><div class="modal-card">
+  <h2 id="confirmText"></h2>
+  <div class="row"><button class="btn btn-ghost" id="confirmNo">Отмена</button><button class="btn btn-gold" id="confirmYes">Да</button></div>
+</div></div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+// ================= Константы =================
+const START_BALANCE = 1000;
+const DAILY = [100, 200, 300, 400, 500, 600, 700];
+const LIMIT_SINGLE = 10000, LIMIT_MULTI = 2000;
+const CHIPS = [
+  {v:10, c:'#2f5fc4'}, {v:50, c:'#b8233a'}, {v:100, c:'#1f7a4d'},
+  {v:500, c:'#6a2bb0'}, {v:1000, c:'#1b1f24'}, {v:5000, c:'#c47a12'}
+];
+// В режиме бесконечных фишек лимитов нет — нужны крупные номиналы
+const CHIPS_INF = [
+  {v:100, c:'#1f7a4d'}, {v:1000, c:'#1b1f24'}, {v:10000, c:'#2f5fc4'},
+  {v:100000, c:'#b8233a'}, {v:1000000, c:'#6a2bb0'}, {v:10000000, c:'#c47a12'}
+];
+const MAX_PLAYERS = 4;
+const ROLL_MS = 2300;          // длительность анимации раунда
+const BET_TIMER_S = 25;        // таймер для остальных после первого «Готов»
+const HB_TIMEOUT = 20000;      // потеря связи
+const PLAYER_COLORS = ['#e8c573', '#5ec8f2', '#ff8a65', '#c792ea'];
+const PEER_PREFIX = 'tc3k-';
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const STORE_KEY = 'tc3k_profile_v1';
+const PAGES_URL = 'https://romandovzhenk0.github.io/triple-cube/';
+const PEERJS_URLS = [
+  'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js',
+  'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'
+];
+// Ретранслятор (TURN) — запасной путь, когда сеть не пускает прямое соединение (мобильный интернет, роутеры).
+const TURN_AUTH = {username: '1062b869fedec0e34ee4d097', credential: 'emqvNmZfEF8u4gcU'};
+const TURN_SERVERS = [
+  {urls: 'stun:stun.relay.metered.ca:80'},
+  {urls: 'turn:global.relay.metered.ca:80', ...TURN_AUTH},
+  {urls: 'turn:global.relay.metered.ca:80?transport=tcp', ...TURN_AUTH},
+  {urls: 'turn:global.relay.metered.ca:443', ...TURN_AUTH},
+  {urls: 'turns:global.relay.metered.ca:443?transport=tcp', ...TURN_AUTH}
+];
+// ?relay в адресе принудительно гонит трафик через ретранслятор — для проверки, что он работает.
+const FORCE_RELAY = new URLSearchParams(location.search).has('relay');
+// Публичный брокер PeerJS нужен только для «рукопожатия», игра идёт напрямую между устройствами.
+const PEER_OPTS = {
+  host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 0,
+  config: {
+    iceServers: [
+      {urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
+      {urls: 'stun:stun.cloudflare.com:3478'},
+      ...TURN_SERVERS
+    ],
+    iceTransportPolicy: FORCE_RELAY ? 'relay' : 'all'
+  }
+};
+
+// ================= Игры =================
+const DICE_CELLS = ['1', '2', '3', '4'];
+// Color Clash: шансы обратны множителям (15:10:6), поэтому у всех цветов одинаковый небольшой перевес дилера
+const COLORS = [
+  {id:'red', name:'Красный', mult:2, w:15},
+  {id:'blue', name:'Синий', mult:3, w:10},
+  {id:'gold', name:'Золотой', mult:5, w:6}
+];
+const COLOR_W = COLORS.reduce((s, c) => s + c.w, 0);
+const DUEL_BONUS = 0.5;
+const GAMES = {
+  dice: {title:'Luck Cube', brand:'LUCK CUBE', tagline:'Один кубик · одно число', cells: DICE_CELLS, maxCells: 1, limited: true,
+    action:'Бросить кубик', busy:'Бросок…', idle:'Делайте ставки, господа'},
+  color: {title:'Color Clash', brand:'COLOR CLASH', tagline:'Угадай цвет', cells: COLORS.map(c => c.id), maxCells: 1, limited: false,
+    action:'Крутить', busy:'Крутим…', idle:'Выберите цвет и сделайте ставку'},
+  chest: {title:'Golden Pick', brand:'GOLDEN PICK', tagline:'Выбери сундук · найди приз', cells:['1','2','3','4','5'], maxCells: 1, limited: false,
+    action:'Открыть сундук', busy:'Сундуки открываются…', idle:'Выберите сундук и сделайте ставку'},
+  cards: {title:'Card Roll', brand:'CARD ROLL', tagline:'Кубик · карты · сумма 11–29', cells:['bet'], maxCells: 1, limited: false,
+    action:'Бросить кубик', busy:'Раздача…', idle:'Сделайте ставку и бросайте кубик'}
+};
+// Golden Pick: содержимое каждого сундука выбирается случайно и независимо (возврат ≈94%)
+const CHEST_PRIZES = {
+  big: {name:'Большой приз', mult:5, w:10},
+  small: {name:'Маленький приз', mult:2, w:22},
+  empty: {name:'Пусто', mult:0, w:68}
+};
+const CHEST_KEYS = Object.keys(CHEST_PRIZES);
+const CHEST_W = CHEST_KEYS.reduce((t, k) => t + CHEST_PRIZES[k].w, 0);
+// Два сундука с призами: ×2 и ×5, лежат в случайных местах; остальные три пустые
+function drawChests() {
+  const c = Array(5).fill('empty');
+  const a = rndInt(5); let b = rndInt(4); if (b >= a) b++;
+  c[a] = 'small'; c[b] = 'big';
+  return c;
+}
+const colorOf = id => COLORS.find(c => c.id === id);
+
+// ================= Card Roll =================
+// Кубик 1–6 определяет, сколько карт из колоды в 52 карты получит игрок. Сумма 11–29 выигрывает ×2.
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUITS = ['♠', '♥', '♦', '♣'];
+const CARD_MIN = 11, CARD_MAX = 29, CARD_MULT = 2;
+function drawCards() {
+  const die = rnd6(), deck = [];
+  for (const s of SUITS) for (const r of RANKS) deck.push({r, s});
+  for (let i = 0; i < die; i++) {                       // частичное перемешивание Фишера — Йетса: карты не повторяются
+    const j = i + rndInt(deck.length - i);
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  const cards = deck.slice(0, die).map(c => ({r: c.r, s: c.s,
+    v: c.r === 'A' ? (rndInt(2) ? 11 : 1) : 'JQK'.includes(c.r) ? 10 : +c.r}));   // туз: 1 или 11 случайно
+  return {die, cards};
+}
+const cardsTotal = o => o.cards.reduce((s, c) => s + c.v, 0);
+const cardsWin = sum => sum >= CARD_MIN && sum <= CARD_MAX;
+const cardWord = n => n === 1 ? 'карта' : n < 5 ? 'карты' : 'карт';
+function cardHtml(c, cls = '', style = '') {
+  const red = c.s === '♥' || c.s === '♦';
+  return `<div class="pcw ${cls}"><div class="pc${red ? ' red' : ''}"${style ? ` style="${style}"` : ''}><span class="tl">${c.r}<i>${c.s}</i></span><span class="ct">${c.s}</span></div><span class="pv${c.r === 'A' ? ' ace' : ''}">${c.v}</span></div>`;
+}
+const HERO_CARDS = [{r:'A', s:'♠', v:11, rot:-13}, {r:'K', s:'♥', v:10, rot:0}, {r:'7', s:'♦', v:7, rot:13}];
+
+// ================= Иконки =================
+const ICONS = {
+  back: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  userplus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  dices: '<rect x="2" y="10" width="12" height="12" rx="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C9.5 3 11 5 12 8c1-3 2.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  volume: '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+  mute: '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/>',
+  chat: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  crown: '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-4-7z"/><path d="M5 20h14"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  chest: '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M3 11a9 9 0 0 1 18 0"/><path d="M3 15h18"/><path d="M12 13v4"/>',
+  cards: '<rect x="3" y="4" width="12" height="16" rx="2" transform="rotate(-9 9 12)"/><rect x="9" y="4" width="12" height="16" rx="2" transform="rotate(9 15 12)"/>'
+};
+const ic = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
+
+// ================= Сундуки (Golden Pick) =================
+const SHADOW = '<ellipse cx="32" cy="59" rx="22" ry="3" fill="rgba(0,0,0,.35)"/>';
+const chestClosed = () => `<svg class="art-closed" viewBox="0 0 64 64" aria-hidden="true">${SHADOW}
+  <rect x="8" y="28" width="48" height="27" rx="3" fill="#8a5a2b" stroke="#4a2c0f" stroke-width="2"/>
+  <path d="M8 30Q8 10 32 10Q56 10 56 30Z" fill="#a06a35" stroke="#4a2c0f" stroke-width="2"/>
+  <rect x="14" y="18" width="5" height="37" fill="#e2be6a"/><rect x="45" y="18" width="5" height="37" fill="#e2be6a"/>
+  <rect x="8" y="26" width="48" height="6" fill="#e2be6a" stroke="#7f5a1b" stroke-width="1.5"/>
+  <rect x="27" y="26" width="10" height="13" rx="2" fill="#fbecc0" stroke="#7f5a1b" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="1.8" fill="#4a2c0f"/></svg>`;
+const chestOpen = () => `<svg class="art-open" viewBox="0 0 64 64" aria-hidden="true">${SHADOW}
+  <path d="M13 5H51L55 24H9Z" fill="#a06a35" stroke="#4a2c0f" stroke-width="2"/>
+  <rect x="9" y="19" width="46" height="5" fill="#e2be6a"/>
+  <rect x="8" y="30" width="48" height="25" rx="3" fill="#8a5a2b" stroke="#4a2c0f" stroke-width="2"/>
+  <rect x="10" y="30" width="44" height="8" fill="#241206"/>
+  <rect x="14" y="38" width="5" height="17" fill="#e2be6a"/><rect x="45" y="38" width="5" height="17" fill="#e2be6a"/>
+  <rect x="8" y="38" width="48" height="4" fill="#e2be6a" stroke="#7f5a1b" stroke-width="1"/></svg>`;
+const chestArt = () => chestClosed() + chestOpen();
+const multTxt = m => '×' + String(m).replace('.', ',');
+
+// ================= Утилиты =================
+const $ = (s, r = document) => r.querySelector(s);
+const fmt = n => Math.round(n).toLocaleString('ru-RU');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sumBets = b => Object.values(b).reduce((s, v) => s + v, 0);
+const signed = n => (n >= 0 ? '+' : '−') + fmt(Math.abs(n));
+// Короткая запись крупных сумм: 250K, 1,5M
+const fmtShort = n => n >= 1e6 ? +(n / 1e6).toFixed(n % 1e6 ? 1 : 0) + 'M' : n >= 1e5 ? +(n / 1e3).toFixed(0) + 'K' : fmt(n);
+const cleanAvatar = a => typeof a === 'string' && a.length <= 24000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(a) ? a : null;
+const avatarInner = (name, av) => av ? `<img src="${av}" alt="">` : esc(initial(name));
+const initial = name => (String(name).trim()[0] || '?').toUpperCase();
+
+function rndInt(n) {
+  const a = new Uint32Array(1), lim = Math.floor(2 ** 32 / n) * n;
+  do crypto.getRandomValues(a); while (a[0] >= lim);
+  return a[0] % n;
+}
+const rnd6 = () => rndInt(6) + 1;
+function drawColor() {
+  let r = rndInt(COLOR_W);
+  for (const c of COLORS) { if (r < c.w) return c.id; r -= c.w; }
+}
+function genCode() {
+  const a = new Uint8Array(6); crypto.getRandomValues(a);
+  return [...a].map(x => CODE_ABC[x % CODE_ABC.length]).join('');
+}
+function dayKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function toast(msg, kind = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind; el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.classList.add('hide'), 2800);
+  setTimeout(() => el.remove(), 3200);
+}
+function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+function isNarrow() { return window.matchMedia('(max-width:899px)').matches; }
+
+// ================= Профиль =================
+let memProfile = null;
+function loadProfile() {
+  try {
+    const p = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (p && typeof p.name === 'string' && Number.isFinite(p.balance)) return p;
+  } catch (e) { return memProfile; }
+  return null;
+}
+function saveProfile() {
+  memProfile = profile;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(profile)); } catch (e) {}
+}
+let profile = loadProfile();
+
+function cleanName(s) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, 16); }
+
+// ================= Ежедневный бонус =================
+function dailyStatus() {
+  const today = dayKey(new Date());
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (profile.lastClaim === today) return {canClaim: false, next: profile.streak % 7 + 1};
+  const day = profile.lastClaim === dayKey(y) ? profile.streak % 7 + 1 : 1;
+  return {canClaim: true, day};
+}
+function renderDaily() {
+  const st = dailyStatus();
+  $('#dailyGrid').innerHTML = DAILY.map((amt, i) => {
+    const d = i + 1; let cls = '';
+    if (st.canClaim) { if (d < st.day) cls = 'done'; else if (d === st.day) cls = 'today'; }
+    else { if (d <= profile.streak) cls = 'done'; if (d === st.next && profile.streak !== 7) cls += ' next'; }
+    return `<div class="dtile ${cls}"><div class="dd">ДЕНЬ ${d}</div><div class="da">${fmt(amt)}</div><div class="dc">${cls.includes('done') ? ic('check') : '<span class="coin sm"></span>'}</div></div>`;
+  }).join('');
+  $('#dailyText').textContent = st.canClaim
+    ? `Сегодня день ${st.day}: +${fmt(DAILY[st.day - 1])} фишек. Заходите каждый день, награда растёт. Если пропустить день, серия обнулится.`
+    : `Награда за сегодня получена. Завтра день ${st.next}: +${fmt(DAILY[st.next - 1])} фишек.`;
+  $('#btnClaim').disabled = !st.canClaim;
+  $('#btnClaim').textContent = st.canClaim ? `Забрать ${fmt(DAILY[st.day - 1])}` : 'Возвращайтесь завтра';
+}
+function claimDaily() {
+  const st = dailyStatus();
+  if (!st.canClaim) return;
+  const amt = DAILY[st.day - 1];
+  profile.balance += amt; profile.streak = st.day; profile.lastClaim = dayKey(new Date());
+  saveProfile(); sfxWin(); vibrate(30);
+  toast(`+${fmt(amt)} фишек — бонус дня ${st.day}`, 'ok');
+  renderDaily(); renderMenu();
+}
+
+// ================= Правила: Luck Cube =================
+// Один кубик: выигрывает число, которое выпало. Выплата ×2 (ставка входит в выплату).
+function evaluateRoll(dice) {
+  const wins = new Map();
+  wins.set(dice[0], ['куб']);
+  return {wins, total: dice[0], triple: false};
+}
+const DICE_MULT = 2;
+function multOf(cell) { return DICE_MULT; }
+const multLabel = m => '×' + m;
+function cellWins(cell, ev) { return ev.wins.has(+cell); }
+
+// ================= Общая логика ставок =================
+// outcome: {dice:[a,b,c]} для костей или {color, duel} для Color Clash
+function settleBets(game, bets, outcome) {
+  let payout = 0, bonus = 0; const winCells = [];
+  if (game === 'dice') {
+    const ev = evaluateRoll(outcome.dice);
+    for (const [cell, amt] of Object.entries(bets)) {
+      if (cellWins(cell, ev)) { payout += Math.floor(amt * multOf(cell)); winCells.push(cell); }
+    }
+  } else if (game === 'cards') {
+    const amt = bets.bet || 0;
+    if (amt && cardsWin(cardsTotal(outcome))) { payout = Math.floor(amt * CARD_MULT); winCells.push('bet'); }
+  } else if (game === 'chest') {
+    for (const [cell, amt] of Object.entries(bets)) {
+      const m = CHEST_PRIZES[outcome.chests[+cell - 1]].mult;
+      if (m > 0) { payout += Math.floor(amt * m); winCells.push(cell); }
+    }
+  } else {
+    const amt = bets[outcome.color] || 0;
+    if (amt) {
+      payout = Math.floor(amt * colorOf(outcome.color).mult);
+      if (outcome.duel) bonus = Math.floor(payout * DUEL_BONUS);
+      payout += bonus;
+      winCells.push(outcome.color);
+    }
+  }
+  return {payout, bonus, winCells};
+}
+function cleanBets(b, game) {
+  const out = {};
+  if (!b || typeof b !== 'object') return out;
+  for (const c of GAMES[game].cells) {
+    const v = Math.floor(Number(b[c]));
+    if (Number.isFinite(v) && v > 0) out[c] = v;
+  }
+  return out;
+}
+function validateBets(b, balance, game, unlimited) {
+  const g = GAMES[game], keys = Object.keys(b), n = keys.length;
+  if (!n) return null;
+  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : game === 'chest' ? 'Ставить можно только на один сундук' : 'Ставить можно только на одну цифру';
+  if (g.limited && !unlimited) {
+    const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
+    if (keys.some(k => b[k] > cap)) {
+      return `Максимальная ставка ${fmt(LIMIT_SINGLE)}`;
+    }
+  }
+  if (sumBets(b) > balance) return 'Недостаточно фишек';
+  return null;
+}
+
+// ================= Звук =================
+let actx = null, noiseBuf = null;
+function audio() {
+  try {
+    if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+function beep(freq, dur, {type = 'sine', vol = .12, at = 0, slide = 0} = {}) {
+  if (!profile || !profile.sound) return;
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function clack(at, vol) {
+  if (!profile || !profile.sound) return;
+  const a = audio(); if (!a) return;
+  if (!noiseBuf) {
+    noiseBuf = a.createBuffer(1, Math.floor(a.sampleRate * .05), a.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  }
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = 1600 + Math.random() * 2000; f.Q.value = 2.5;
+  g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(a.currentTime + at);
+}
+function sfxRoll() { let t = 0, gap = .05; clack(0, .3); for (let i = 0; i < 14; i++) { t += gap; gap *= 1.13; clack(t, .4 * (1 - i / 16)); } }
+function sfxTick(i) { beep(700 + (i % 3) * 180, .045, {type:'square', vol:.035}); }
+function sfxChip() { beep(2200, .05, {type:'triangle', vol:.06}); beep(3100, .04, {type:'triangle', vol:.04, at:.025}); }
+function sfxWin() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .2, {type:'triangle', vol:.1, at:i * .09})); }
+function sfxLose() { beep(240, .4, {type:'sawtooth', vol:.04, slide:.6}); }
+
+// ================= Кубики (3D) =================
+const PIPS = {1:[5], 2:[3,7], 3:[3,5,7], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9]};
+const FACE_ROT = {1:[0,0], 2:[0,-90], 3:[-90,0], 4:[90,0], 5:[0,90], 6:[0,180]};
+const diceEls = [], spins = [];
+function makeDie(row, full) {
+  const slot = document.createElement('div'); slot.className = 'die-slot';
+  slot.innerHTML = '<div class="die-shadow"></div><div class="die-wrap"><div class="die"></div></div>';
+  const die = slot.querySelector('.die');
+  for (let v = 1; v <= 6; v++) {
+    const f = document.createElement('div'); f.className = 'face f' + v;
+    const fv = full || v <= 4 ? v : v - 4; // на кубике только цифры 1–4 (лишние грани повторяют 1 и 2)
+    PIPS[fv].forEach(idx => {
+      const p = document.createElement('span');
+      p.className = 'pip' + (fv === 1 ? ' red' : '');
+      p.style.gridArea = `${Math.floor((idx - 1) / 3) + 1} / ${(idx - 1) % 3 + 1}`;
+      f.appendChild(p);
+    });
+    die.appendChild(f);
+  }
+  row.appendChild(slot);
+  return {slot, die};
+}
+function buildDice() {
+  const row = $('#diceRow');
+  for (let i = 0; i < 1; i++) {
+    diceEls.push(makeDie(row)); spins.push({x:0, y:0, z:0});
+    setDie(i, i + 1, false);
+  }
+  diceEls.push(makeDie($('#cardDieRow'), true)); spins.push({x:0, y:0, z:0});   // обычный кубик 1–6 для Card Roll
+  setDie(1, 1, false);
+  document.querySelectorAll('[data-hero]').forEach(r => { for (let i = 0; i < 1; i++) makeDie(r); });
+}
+function setDie(i, v, spin) {
+  const {die} = diceEls[i], s = spins[i], [bx, by] = FACE_ROT[v];
+  if (spin) {
+    s.x += 2 + Math.floor(Math.random() * 2);
+    s.y += 2 + Math.floor(Math.random() * 2);
+    s.z += 1 + Math.floor(Math.random() * 2);
+  } else die.style.transition = 'none';
+  die.style.transform = `rotateX(${bx + 360 * s.x}deg) rotateY(${by + 360 * s.y}deg) rotateZ(${360 * s.z}deg)`;
+  if (!spin) { void die.offsetWidth; die.style.transition = ''; }
+}
+function animateRoll(values) {
+  sfxRoll(); vibrate([20, 60, 20]);
+  values.forEach((v, i) => {
+    const {slot} = diceEls[i];
+    slot.classList.remove('tossing'); void slot.offsetWidth; slot.classList.add('tossing');
+    setDie(i, v, true);
+  });
+}
+
+// ================= Card Roll: анимация =================
+// 0–1 с: бросок кубика, дальше карты выдаются по одной (всё укладывается в ROLL_MS)
+function animateCards(outcome, session) {
+  sfxRoll(); vibrate([20, 60, 20]);
+  const slot = $('#cardDieRow .die-slot');
+  slot.classList.remove('tossing'); void slot.offsetWidth; slot.classList.add('tossing');
+  setDie(1, outcome.die, true);
+  const box = $('#crCards'), tot = $('#crTotal'), zone = $('#crZone');
+  box.innerHTML = ''; box.dataset.k = '';
+  tot.textContent = '0'; tot.className = ''; zone.textContent = 'раздача…';
+  const n = outcome.cards.length, gap = Math.min(260, Math.floor(1100 / n));
+  let sum = 0;
+  outcome.cards.forEach((c, i) => {
+    setTimeout(() => {
+      if (session !== S.session) return;
+      sum += c.v;
+      box.insertAdjacentHTML('beforeend', cardHtml(c, 'deal'));
+      tot.textContent = sum; tot.classList.remove('bump'); void tot.offsetWidth; tot.classList.add('bump');
+      sfxTick(i); vibrate(10);
+    }, 1000 + i * gap);
+  });
+}
+
+// ================= Color Clash: анимация =================
+function setOrb(color, label = '') {
+  const orb = $('#orb');
+  orb.className = 'orb ' + (color || 'idle');
+  orb.textContent = label;
+}
+function lightCell(id) {
+  for (const c of COLORS) cellEls[c.id] && cellEls[c.id].classList.toggle('lit', c.id === id);
+}
+// Подсветка бежит по цветам и замедляется, пока не остановится на выпавшем
+function animateColor(result, session) {
+  const ids = COLORS.map(c => c.id), target = ids.indexOf(result);
+  const start = rndInt(3);
+  let steps = 16;
+  while ((start + steps) % 3 !== target) steps++;
+  let t = 0, delay = 40;
+  vibrate(15);
+  for (let i = 1; i <= steps; i++) {
+    t += delay; delay *= 1.12;
+    const id = ids[(start + i) % 3];
+    setTimeout(() => {
+      if (session !== S.session) return;
+      lightCell(id); setOrb(id); sfxTick(i);
+    }, t);
+  }
+}
+
+// ================= Состояние клиента =================
+const S = {
+  role: null,          // 'host' | 'client'
+  game: 'dice',
+  myId: null, code: null,
+  netState: 'idle',    // для хоста: 'connecting' | 'ready' | 'error'
+  netError: '',
+  view: null,          // последнее состояние стола от хоста
+  myBets: {}, stack: [], lastBets: null, chip: 100, chipSet: null,
+  submitting: false, animating: false, frozenBalance: 0,
+  lastRoll: null, localDeadline: 0, autoSubmitted: false,
+  unread: 0, session: 0, dailyShown: false
+};
+let room = null;   // экземпляр Room, если мы хост стола
+let net = {peer: null, conn: null, lastSeen: 0, hb: null};
+let pendingRoom = null;   // код стола из ссылки-приглашения
+
+function me() { return S.view ? S.view.players.find(p => p.id === S.myId) : null; }
+function isInf() { return !!(S.view && S.view.infinite); }
+function myBalance() {
+  if (isInf()) return Infinity;
+  if (S.animating) return S.frozenBalance;
+  const m = me(); return m ? m.balance : profile.balance;
+}
+function bettingOpen() { return !!S.view && S.view.phase === 'betting' && !S.animating; }
+function isLocked() { const m = me(); return !bettingOpen() || S.submitting || !!(m && m.ready); }
+
+// ================= Стол (логика хоста) =================
+class Room {
+  constructor(game, infinite) {
+    this.game = game;                // 'dice' | 'color'
+    this.infinite = !!infinite;      // бесконечные фишки: баланс не меняется, считается итог сессии
+    this.players = new Map();
+    this.phase = 'betting'; this.round = 1; this.history = [];
+    this.deadline = 0; this.timer = null; this.hb = null;
+    this.code = null; this.peer = null; this.destroyed = false;
+    this.streak = {last: null, n: 0, duelNext: false};   // для «Дуэли» в Color Clash
+  }
+  addPlayer(id, name, balance, conn, avatar) {
+    const used = new Set([...this.players.values()].map(p => p.color));
+    const p = {id, name, balance, conn, avatar: avatar || null, ready: false, bets: {}, host: id === 'host', net: 0,
+      color: PLAYER_COLORS.find(c => !used.has(c)) || '#fff', lastSeen: Date.now()};
+    this.players.set(id, p);
+    return p;
+  }
+  removePlayer(id) {
+    const p = this.players.get(id);
+    if (!p || p.host) return;
+    this.players.delete(id);
+    try { p.conn && p.conn.close(); } catch (e) {}
+    this.sys(`${p.name} покинул стол`);
+    if (this.players.size < 2) this.clearTimer();
+    this.broadcastState();
+    this.checkAllReady();
+  }
+  accept(conn) {
+    let pid = null;
+    conn.on('data', msg => {
+      if (this.destroyed || !msg || typeof msg !== 'object') return;
+      if (!pid) {
+        if (msg.t !== 'hello') return;
+        if (this.players.size >= MAX_PLAYERS) { try { conn.send({t:'full'}); } catch (e) {} setTimeout(() => conn.close(), 400); return; }
+        pid = conn.peer;
+        const bal = Math.floor(Number(msg.balance));
+        const p = this.addPlayer(pid, cleanName(msg.name) || 'Игрок', Number.isFinite(bal) && bal >= 0 ? Math.min(bal, 1e9) : START_BALANCE, conn, cleanAvatar(msg.avatar));
+        conn.send({t:'welcome', id: pid});
+        this.broadcastState();
+        this.sys(`${p.name} сел за стол`);
+        return;
+      }
+      this.handle(pid, msg);
+    });
+    conn.on('close', () => { if (pid) this.removePlayer(pid); });
+    conn.on('error', () => { if (pid) this.removePlayer(pid); });
+  }
+  publicState() {
+    return {
+      t: 'state', game: this.game, infinite: this.infinite, phase: this.phase, round: this.round, code: this.code,
+      duel: this.game === 'color' && this.streak.duelNext,
+      timeLeft: this.deadline ? Math.max(0, this.deadline - Date.now()) : 0,
+      history: this.history,
+      players: [...this.players.values()].map(p => ({id: p.id, name: p.name, balance: p.balance,
+        ready: p.ready, bets: p.ready ? p.bets : {}, avatar: p.avatar, color: p.color, host: p.host, net: p.net}))
+    };
+  }
+  sendTo(id, msg) {
+    const p = this.players.get(id);
+    if (!p) return;
+    if (!p.conn) { const copy = JSON.parse(JSON.stringify(msg)); setTimeout(() => onServerMsg(copy), 0); return; }
+    try { if (p.conn.open) p.conn.send(msg); } catch (e) {}
+  }
+  broadcast(msg) { for (const id of this.players.keys()) this.sendTo(id, msg); }
+  broadcastState() { if (!this.destroyed) this.broadcast(this.publicState()); }
+  sys(text) { this.broadcast({t:'chat', sys:true, text}); }
+  clearTimer() { clearTimeout(this.timer); this.timer = null; this.deadline = 0; }
+  handle(id, msg) {
+    const p = this.players.get(id);
+    if (!p || this.destroyed) return;
+    p.lastSeen = Date.now();
+    switch (msg.t) {
+      case 'bets': {
+        if (this.phase !== 'betting') return this.sendTo(id, {t:'error', msg:'Ставки на этот раунд закрыты'});
+        const bets = cleanBets(msg.bets, this.game);
+        const err = validateBets(bets, this.infinite ? Infinity : p.balance, this.game, this.infinite);
+        if (err) return this.sendTo(id, {t:'error', msg: err});
+        p.bets = bets; p.ready = true;
+        const all = [...this.players.values()].every(q => q.ready);
+        if (!all && !this.timer && this.players.size > 1) {
+          this.deadline = Date.now() + BET_TIMER_S * 1000;
+          this.timer = setTimeout(() => this.roll(), BET_TIMER_S * 1000);
+        }
+        this.broadcastState();
+        this.checkAllReady();
+        break;
+      }
+      case 'unready':
+        if (this.phase === 'betting' && p.ready) { p.ready = false; p.bets = {}; this.broadcastState(); }
+        break;
+      case 'chat': {
+        const text = String(msg.text || '').trim().slice(0, 200);
+        if (text) this.broadcast({t:'chat', from: p.name, color: p.color, text});
+        break;
+      }
+      case 'force':
+        if (p.host && this.phase === 'betting' && [...this.players.values()].some(q => q.ready)) this.roll();
+        break;
+    }
+  }
+  checkAllReady() {
+    if (this.phase !== 'betting' || !this.players.size) return;
+    if ([...this.players.values()].every(p => p.ready)) this.roll();
+  }
+  // Цвет раунда и «Дуэль»: один цвет два раунда подряд → следующий раунд с бонусом
+  drawColorRound() {
+    const color = drawColor(), duel = this.streak.duelNext;
+    if (color === this.streak.last) this.streak.n++;
+    else { this.streak.last = color; this.streak.n = 1; }
+    if (duel) this.streak.n = 1;
+    this.streak.duelNext = this.streak.n >= 2;
+    return {color, duel};
+  }
+  roll() {
+    if (this.destroyed || this.phase !== 'betting') return;
+    this.clearTimer();
+    this.phase = 'rolling';
+    const outcome = this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
+    const results = {};
+    for (const p of this.players.values()) {
+      let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
+      if (staked > 0 && (this.infinite || staked <= p.balance)) {
+        ({payout, bonus, winCells} = settleBets(this.game, p.bets, outcome));
+        if (this.infinite) p.net += payout - staked;
+        else p.balance += payout - staked;
+      } else staked = 0;
+      results[p.id] = {bets: staked ? p.bets : {}, staked, payout, bonus, winCells, balance: p.balance, net: p.net};
+      p.ready = false; p.bets = {};
+    }
+    const self = this.players.get('host');
+    if (self && !this.infinite) { profile.balance = self.balance; saveProfile(); }
+    this.history.unshift(historyItem(this.game, outcome));
+    if (this.history.length > 12) this.history.length = 12;
+    this.broadcast({t:'roll', outcome, round: this.round, results});
+    this.round++;
+    setTimeout(() => {
+      if (this.destroyed) return;
+      this.phase = 'betting';
+      this.broadcastState();
+    }, ROLL_MS + 500);
+  }
+  startHeartbeat() {
+    this.hb = setInterval(() => {
+      const now = Date.now();
+      for (const p of [...this.players.values()]) {
+        if (!p.conn) continue;
+        if (now - p.lastSeen > HB_TIMEOUT) { this.removePlayer(p.id); continue; }
+        try { p.conn.open && p.conn.send({t:'ping'}); } catch (e) {}
+      }
+    }, 4000);
+  }
+  destroy() {
+    this.destroyed = true;
+    clearInterval(this.hb); this.clearTimer();
+    for (const p of this.players.values()) {
+      if (!p.conn) continue;
+      try { p.conn.send({t:'closed'}); } catch (e) {}
+    }
+    const peer = this.peer;
+    if (peer) setTimeout(() => { try { peer.destroy(); } catch (e) {} }, 300);
+  }
+}
+function historyItem(game, outcome) {
+  if (game === 'cards') return {n: cardsTotal(outcome)};
+  if (game === 'chest') return outcome.chests;
+  return game === 'dice' ? outcome.dice : {c: outcome.color, duel: !!outcome.duel};
+}
+
+// ================= Сеть: общие функции =================
+let peerLoading = null;
+function loadPeer() {
+  if (window.Peer || (window.peerjs && window.peerjs.Peer)) return Promise.resolve();
+  if (peerLoading) return peerLoading;
+  peerLoading = new Promise((resolve, reject) => {
+    let i = 0;
+    const next = () => {
+      if (i >= PEERJS_URLS.length) { peerLoading = null; return reject(new Error('peerjs')); }
+      const s = document.createElement('script');
+      s.src = PEERJS_URLS[i++];
+      s.onload = () => (window.Peer || (window.peerjs && window.peerjs.Peer)) ? resolve() : next();
+      s.onerror = () => { s.remove(); next(); };
+      document.head.appendChild(s);
+    };
+    next();
+  });
+  return peerLoading;
+}
+function PeerCtor() { return window.Peer || window.peerjs.Peer; }
+function peerErrText(err) {
+  switch (err && err.type) {
+    case 'peer-unavailable': return 'Стол не найден. Возможно, хост уже закрыл игру — попросите новую ссылку.';
+    case 'browser-incompatible': return 'Этот браузер не поддерживает прямое соединение (WebRTC).';
+    case 'unavailable-id': return 'Не удалось подготовить стол, попробуйте ещё раз.';
+    case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
+      return 'Нет связи с сервером соединения. Проверьте интернет.';
+    default: return 'Ошибка сети' + (err && err.type ? ': ' + err.type : '');
+  }
+}
+function sendToHost(msg) {
+  if (room) room.handle(S.myId, msg);
+  else if (net.conn && net.conn.open) { try { net.conn.send(msg); } catch (e) {} }
+}
+
+function onServerMsg(msg) {
+  if (!msg || !msg.t || !S.role) return;
+  net.lastSeen = Date.now();
+  switch (msg.t) {
+    case 'ping': sendToHost({t:'pong'}); break;
+    case 'welcome': S.myId = msg.id; break;
+    case 'state': applyState(msg); break;
+    case 'roll': onRoll(msg); break;
+    case 'chat': addChat(msg); break;
+    case 'error': S.submitting = false; S.autoSubmitted = false; toast(msg.msg, 'err'); render(); break;
+    case 'full': toast('За столом нет свободных мест', 'err'); leaveGame(); break;
+    case 'closed': toast('Хост закрыл стол', 'err'); leaveGame(); break;
+  }
+}
+
+// ================= Приглашения =================
+function baseUrl() { return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : PAGES_URL; }
+function inviteLink() { return `${baseUrl()}?room=${S.code}`; }
+function clearRoomParam() {
+  try { if (/[?&]room=/.test(location.search)) history.replaceState(null, '', location.pathname); } catch (e) {}
+}
+function showInvite() {
+  renderInvite();
+  $('#btnCopyLink span').textContent = 'Скопировать';
+  openModal('modalInvite');
+}
+// Ссылка появляется, когда стол зарегистрирован в сети; до этого — ожидание или ошибка с повтором
+function renderInvite() {
+  const box = $('#inviteBox'), ready = !!S.code;
+  const failed = !ready && S.netState === 'error';
+  $('#inviteLink').textContent = ready ? inviteLink() : failed ? S.netError : 'Готовим ссылку…';
+  box.classList.toggle('wait', !ready && !failed);
+  box.classList.toggle('err', failed);
+  $('#btnCopyLink').disabled = $('#btnShareLink').disabled = !ready;
+  $('#btnShareLink').hidden = !navigator.share;
+  $('#btnInviteRetry').hidden = !failed;
+  $('#inviteSeats').textContent = MAX_PLAYERS - (S.view ? S.view.players.length : 1);
+  $('#inviteHint').hidden = S.role !== 'host';
+}
+async function copyInvite() {
+  if (!S.code) return;
+  if (await copyText(inviteLink())) {
+    $('#btnCopyLink span').textContent = 'Скопировано';
+    toast('Ссылка скопирована. Отправьте её другу', 'ok');
+  } else toast('Не удалось скопировать. Выделите ссылку вручную', 'err');
+}
+function shareInvite() {
+  if (!S.code) return;
+  if (!navigator.share) return copyInvite();
+  navigator.share({title: GAMES[S.game].title, text: `Садись за мой стол в «${GAMES[S.game].title}»!`, url: inviteLink()}).catch(() => {});
+}
+let cancelConnecting = null;
+function showConnecting(title, text, onCancel) {
+  $('#connTitle').textContent = title;
+  $('#connText').textContent = text;
+  cancelConnecting = onCancel;
+  openModal('modalConnecting');
+}
+function hideConnecting() { cancelConnecting = null; closeModal('modalConnecting'); }
+
+// ================= Открыть стол / подключиться =================
+// «Играть» сразу сажает за стол против дилера; в сети стол регистрируется в фоне, чтобы можно было позвать друзей
+function startTable() {
+  room = new Room(profile.game, profile.infinite);
+  room.addPlayer('host', profile.name, profile.balance, null, cleanAvatar(profile.avatar));
+  S.role = 'host'; S.myId = 'host'; S.code = null; S.game = room.game;
+  enterGame();
+  room.broadcastState();
+  attachPeer(room);
+}
+function attachPeer(r) {
+  S.netState = 'connecting'; S.netError = '';
+  let attempts = 0;
+  const fail = text => {
+    if (room !== r) return;
+    S.netState = 'error'; S.netError = text;
+    renderInvite();
+  };
+  loadPeer().then(() => {
+    const tryOpen = () => {
+      if (room !== r) return;
+      const code = genCode();
+      const p = new (PeerCtor())(PEER_PREFIX + code, PEER_OPTS);
+      let opened = false;
+      const to = setTimeout(() => { if (!opened) { try { p.destroy(); } catch (e) {} fail('Сервер соединения не отвечает. Проверьте интернет.'); } }, 15000);
+      p.on('open', () => {
+        opened = true; clearTimeout(to);
+        if (room !== r) { try { p.destroy(); } catch (e) {} return; }
+        r.code = code; r.peer = p; net.peer = p;
+        r.startHeartbeat();
+        S.code = code; S.netState = 'ready';
+        r.broadcastState();
+        renderInvite();
+      });
+      p.on('connection', conn => { if (room === r && r.peer === p) r.accept(conn); else conn.close(); });
+      p.on('disconnected', () => {
+        if (room === r && r.peer === p && !p.destroyed) setTimeout(() => { try { !p.destroyed && p.reconnect(); } catch (e) {} }, 1500);
+      });
+      p.on('error', err => {
+        if (opened) return console.warn('peer', err);
+        clearTimeout(to); try { p.destroy(); } catch (e) {}
+        if (err.type === 'unavailable-id' && attempts++ < 3) return tryOpen();
+        fail(peerErrText(err));
+      });
+    };
+    tryOpen();
+  }).catch(() => fail('Не удалось загрузить сетевой модуль. Нужен интернет.'));
+}
+
+async function joinRoom(raw) {
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  pendingRoom = null;
+  if (code.length < 4) { clearRoomParam(); return toast('Ссылка-приглашение повреждена', 'err'); }
+  let done = false, peer = null, to = null;
+  const abort = text => {
+    if (done) return; done = true; clearTimeout(to);
+    try { peer && peer.destroy(); } catch (e) {}
+    if (net.peer === peer) net = {peer: null, conn: null, lastSeen: 0, hb: null};
+    hideConnecting(); clearRoomParam();
+    if (text) toast(text, 'err');
+  };
+  // Этапы подключения — чтобы при сбое было видно, где именно застряли
+  const ICE_FAIL = 'Стол найден, но сеть не пропускает соединение с хостом. Попробуйте другую сеть (Wi-Fi или мобильный интернет).';
+  let stage = 'broker';
+  const setStage = (s, text) => { stage = s; $('#connText').textContent = text; };
+  showConnecting('Подключение к столу…', 'Связываемся с сервером соединения', () => abort());
+  try { await loadPeer(); } catch (e) { return abort('Не удалось загрузить сетевой модуль. Нужен интернет.'); }
+  if (done) return;
+  const Peer = PeerCtor();
+  peer = new Peer(PEER_OPTS);
+  to = setTimeout(() => abort(stage === 'broker'
+    ? 'Нет связи с сервером соединения. Проверьте интернет.'
+    : stage === 'ice' ? ICE_FAIL : 'Хост не отвечает. Убедитесь, что стол открыт, или попросите новую ссылку.'), 25000);
+  net.peer = peer;
+  peer.on('open', () => {
+    if (done) return;
+    setStage('ice', 'Устанавливаем соединение с хостом');
+    const conn = peer.connect(PEER_PREFIX + code, {reliable: true, serialization: 'json'});
+    net.conn = conn;
+    const watchIce = () => {
+      if (done) return;
+      const pc = conn.peerConnection;
+      if (!pc) return setTimeout(watchIce, 200);
+      pc.addEventListener('iceconnectionstatechange', () => {
+        if (pc.iceConnectionState === 'failed') abort(ICE_FAIL);
+        else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') setStage('hello', 'Садимся за стол');
+      });
+    };
+    watchIce();
+    conn.on('open', () => conn.send({t:'hello', name: profile.name, balance: profile.balance, avatar: cleanAvatar(profile.avatar)}));
+    conn.on('data', msg => {
+      if (!msg || typeof msg !== 'object') return;
+      if (!done) {
+        if (msg.t === 'full') return abort('За этим столом уже 4 игрока');
+        if (msg.t !== 'welcome') return;
+        done = true; clearTimeout(to);
+        hideConnecting();
+        S.role = 'client'; S.myId = msg.id; S.code = code;
+        net.lastSeen = Date.now();
+        net.hb = setInterval(() => {
+          if (S.role === 'client' && Date.now() - net.lastSeen > HB_TIMEOUT) { toast('Связь с хостом потеряна', 'err'); leaveGame(); }
+        }, 3000);
+        return;
+      }
+      onServerMsg(msg);
+    });
+    conn.on('close', () => { if (S.role === 'client' && net.conn === conn) { toast('Соединение с хостом закрыто', 'err'); leaveGame(); } });
+  });
+  peer.on('error', err => {
+    if (!done) return abort(peerErrText(err));
+    console.warn('peer', err);
+  });
+}
+
+function leaveGame() {
+  const r = room; room = null;
+  S.role = null;
+  if (r) r.destroy();
+  if (net.conn) { try { net.conn.close(); } catch (e) {} }
+  if (net.peer && !(r && r.peer === net.peer)) { try { net.peer.destroy(); } catch (e) {} }
+  clearInterval(net.hb);
+  net = {peer: null, conn: null, lastSeen: 0, hb: null};
+  Object.assign(S, {myId: null, code: null, view: null, myBets: {}, stack: [], lastBets: null, netState: 'idle', netError: '',
+    submitting: false, animating: false, lastRoll: null, localDeadline: 0, autoSubmitted: false, unread: 0});
+  S.session++;
+  releaseWake(); closeSide(); clearRoomParam();
+  document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+  goMenu();
+}
+
+// ================= Обработка сообщений от хоста =================
+function applyState(msg) {
+  const first = !S.view;
+  S.view = msg;
+  S.submitting = false;
+  if (msg.timeLeft > 0) S.localDeadline = Date.now() + msg.timeLeft;
+  else { S.localDeadline = 0; S.autoSubmitted = false; }
+  const m = me();
+  if (m && !S.animating && !msg.infinite && profile.balance !== m.balance) { profile.balance = m.balance; saveProfile(); }
+  if (first && !$('#screen-game').classList.contains('active')) { S.game = GAMES[msg.game] ? msg.game : 'dice'; enterGame(); }
+  render();
+  if ($('#modalInvite').classList.contains('open')) renderInvite();
+}
+
+function onRoll(msg) {
+  if (!S.view) return;
+  const session = S.session, outcome = msg.outcome;
+  const m = me();
+  S.frozenBalance = m ? m.balance : profile.balance;
+  S.animating = true; S.submitting = false; S.localDeadline = 0; S.autoSubmitted = false;
+  S.view.phase = 'rolling';
+  const res = msg.results[S.myId];
+  if (res && res.staked > 0) { S.lastBets = {...res.bets}; S.myBets = {}; S.stack = []; }
+  if (res && !S.view.infinite) { profile.balance = res.balance; saveProfile(); }
+  S.lastRoll = null;
+  if (S.game === 'dice') animateRoll(outcome.dice);
+  else if (S.game === 'chest') { sfxRoll(); vibrate([20, 60, 20]); }
+  else if (S.game === 'cards') animateCards(outcome, session);
+  else animateColor(outcome.color, session);
+  render();
+  setTimeout(() => {
+    if (session !== S.session || !S.view) return;
+    S.animating = false;
+    lightCell(null);
+    const ev = S.game === 'dice' ? evaluateRoll(outcome.dice) : null;
+    S.lastRoll = {outcome, ev, res};
+    S.view.players.forEach(p => {
+      const r = msg.results[p.id];
+      if (r) { p.balance = r.balance; p.net = r.net; }
+      p.ready = false; p.bets = {};
+    });
+    S.view.history = [historyItem(S.game, outcome), ...(S.view.history || [])].slice(0, 12);
+    if (res && res.staked > 0) {
+      if (res.payout > 0) { sfxWin(); vibrate([40, 40, 80]); } else sfxLose();
+    }
+    if (S.view.players.length > 1) {
+      const parts = [];
+      for (const p of S.view.players) {
+        const r = msg.results[p.id];
+        if (r && r.staked > 0) parts.push(`${p.name} ${signed(r.payout - r.staked)}`);
+      }
+      const what = S.game === 'cards' ? `кубик ${outcome.die}, сумма ${cardsTotal(outcome)}` : S.game === 'chest' ? 'сундуки открыты' : S.game === 'dice'
+        ? `выпало ${outcome.dice[0]} (×${DICE_MULT})`
+        : `${colorOf(outcome.color).name.toLowerCase()} ×${colorOf(outcome.color).mult}${outcome.duel ? ' (дуэль)' : ''}`;
+      addChat({sys: true, text: `Раунд ${msg.round}: ${what}${parts.length ? ' — ' + parts.join(', ') : ''}`});
+    }
+    render();
+  }, ROLL_MS);
+}
+
+// ================= Действия игрока =================
+function placeChip(cell) {
+  audio();
+  if (isLocked()) {
+    const m = me();
+    if (m && m.ready && bettingOpen()) toast('Ставки приняты. Чтобы поменять, нажмите «Изменить»');
+    return;
+  }
+  const g = GAMES[S.game];
+  const cur = S.myBets[cell] || 0;
+  const cells = Object.keys(S.myBets);
+  // Color Clash: один цвет за раунд — нажатие на другой цвет переносит ставку
+  if (g.maxCells === 1 && cells.length && !cur) {
+    const amt = S.myBets[cells[0]];
+    S.myBets = {[cell]: amt}; S.stack = [{cell, add: amt}];
+    sfxChip(); render();
+    return;
+  }
+  const n = cells.length + (cur ? 0 : 1);
+  if (n > g.maxCells) return toast('Ставить можно только на одну цифру', 'err');
+  const limited = g.limited && !isInf();
+  const cap = !limited ? Infinity : LIMIT_SINGLE;
+  const free = myBalance() - sumBets(S.myBets);
+  const add = Math.min(S.chip, cap - cur, free);
+  if (add <= 0) return toast(free <= 0 ? 'Недостаточно фишек' : `Лимит клетки — ${fmt(cap)}`, 'err');
+  S.myBets[cell] = cur + add;
+  S.stack.push({cell, add});
+  sfxChip();
+  render();
+}
+function removeCell(cell) {
+  if (isLocked() || !S.myBets[cell]) return;
+  delete S.myBets[cell];
+  S.stack = S.stack.filter(x => x.cell !== cell);
+  sfxChip(); render();
+}
+function undo() {
+  if (isLocked()) return;
+  const last = S.stack.pop(); if (!last) return;
+  S.myBets[last.cell] -= last.add;
+  if (S.myBets[last.cell] <= 0) delete S.myBets[last.cell];
+  render();
+}
+function clearBets() { if (isLocked()) return; S.myBets = {}; S.stack = []; render(); }
+function repeatBets() {
+  if (isLocked() || !S.lastBets) return;
+  const cand = {...S.lastBets};
+  const err = validateBets(cand, myBalance(), S.game, isInf());
+  if (err) return toast(err, 'err');
+  S.myBets = cand;
+  S.stack = Object.entries(cand).map(([cell, add]) => ({cell, add}));
+  sfxChip(); render();
+}
+function submitBets() {
+  const err = validateBets(S.myBets, myBalance(), S.game, isInf());
+  if (err) { toast(err, 'err'); return false; }
+  S.submitting = true;
+  sendToHost({t:'bets', bets: {...S.myBets}});
+  render();
+  return true;
+}
+function onMain() {
+  audio();
+  if (!bettingOpen() || S.submitting) return;
+  const m = me(), total = sumBets(S.myBets);
+  if (m && m.ready) { sendToHost({t:'unready'}); return; }
+  if (!total && S.view.players.length === 1) return toast('Сначала сделайте ставку');
+  submitBets();
+}
+function tick() {
+  if (!S.view || !$('#screen-game').classList.contains('active')) return;
+  renderStatus();
+  // Если таймер вот-вот выйдет, а ставки не отправлены — отправляем автоматически
+  const m = me();
+  if (S.localDeadline && bettingOpen() && m && !m.ready && !S.submitting && !S.autoSubmitted
+      && sumBets(S.myBets) > 0 && S.localDeadline - Date.now() <= 2000) {
+    S.autoSubmitted = true;
+    submitBets();
+  }
+}
+
+// ================= Отрисовка =================
+const cellEls = {};
+function buildBoard(game) {
+  const b = $('#board');
+  b.innerHTML = '';
+  b.className = 'board ' + game;
+  for (const k of Object.keys(cellEls)) delete cellEls[k];
+  const extras = '<span class="why"></span><span class="marks"></span><span class="stake"></span>';
+  if (game === 'dice') {
+    DICE_CELLS.forEach(c => {
+      const el = document.createElement('button');
+      el.className = 'cell';
+      el.dataset.cell = c;
+      el.innerHTML = `<span class="num ${+c % 2 ? 'red' : 'black'}">${c}</span>` + extras;
+      b.appendChild(el);
+      cellEls[c] = el;
+    });
+  } else if (game === 'cards') {
+    const el = document.createElement('button');
+    el.className = 'cell bcell';
+    el.dataset.cell = 'bet';
+    el.innerHTML = `<span class="bc-title">Ваша ставка</span><span class="bc-main">Сумма 11–29 · ×${CARD_MULT}</span>`
+      + '<span class="bc-zones"><i class="lose">≤10</i><i class="win">11–29 ✓</i><i class="lose">≥30</i></span>' + extras;
+    b.appendChild(el);
+    cellEls.bet = el;
+  } else if (game === 'chest') {
+    GAMES.chest.cells.forEach(c => {
+      const el = document.createElement('button');
+      el.className = 'cell kcell';
+      el.dataset.cell = c;
+      el.innerHTML = `<span class="chest-art">${chestArt()}</span><span class="cres"></span>` + extras;
+      b.appendChild(el);
+      cellEls[c] = el;
+    });
+  } else {
+    COLORS.forEach(c => {
+      const el = document.createElement('button');
+      el.className = 'cell ccell ' + c.id;
+      el.dataset.cell = c.id;
+      el.innerHTML = `<span class="cname">${c.name}</span><span class="cmult">×${c.mult}</span><span class="cchance">шанс ${Math.round(c.w / COLOR_W * 100)}%</span>` + extras;
+      b.appendChild(el);
+      cellEls[c.id] = el;
+    });
+  }
+}
+function buildChips() {
+  const set = isInf() ? CHIPS_INF : CHIPS;
+  if (S.chipSet === set) return;
+  S.chipSet = set;
+  if (!set.some(ch => ch.v === S.chip)) S.chip = set === CHIPS_INF ? 10000 : 100;
+  $('#chips').innerHTML = set.map(ch =>
+    `<button class="chip" data-v="${ch.v}" style="--c:${ch.c}"><span>${ch.v >= 1e6 ? ch.v / 1e6 + 'M' : ch.v >= 1000 ? ch.v / 1000 + 'K' : ch.v}</span></button>`).join('');
+  renderChips();
+}
+function renderChips() {
+  document.querySelectorAll('.chip').forEach(b => b.classList.toggle('sel', +b.dataset.v === S.chip));
+}
+function render() {
+  if (!S.view) return;
+  buildChips();
+  renderTopbar(); renderBoard(); renderBetInfo(); renderActions(); renderStatus(); renderRollInfo();
+  if (!S.animating) { renderPlayers(); renderHistory(); renderColorTray(); renderCardsTray(); }
+}
+function renderTopbar() {
+  const v = S.view, n = v.players.length;
+  $('#bal').textContent = v.infinite ? '∞' : fmt(myBalance());
+  $('#tbTitle').textContent = GAMES[S.game].brand;
+  const where = S.role === 'host' ? (n === 1 ? 'Против дилера' : `Ваш стол · ${n}/${MAX_PLAYERS}`) : `Стол друга · ${n}/${MAX_PLAYERS}`;
+  $('#tbSub').textContent = (v.infinite ? '∞ · ' : '') + `${where} · раунд ${v.round}`;
+  $('#btnInvite').hidden = !(S.role === 'host' || S.code) || n >= MAX_PLAYERS;
+  $('#btnSound').innerHTML = ic(profile.sound ? 'volume' : 'mute');
+  const badge = $('#chatBadge');
+  badge.hidden = !S.unread; badge.textContent = S.unread > 9 ? '9+' : S.unread;
+}
+function renderBoard() {
+  const v = S.view, locked = isLocked();
+  // Golden Pick: сундуки остаются открытыми после раунда, пока игрок не сделает новую ставку
+  const reveal = S.game !== 'chest' || (!!S.lastRoll && !S.animating && !Object.keys(S.myBets).length);
+  const lr = reveal ? S.lastRoll : null;
+  $('#board').classList.toggle('locked', locked);
+  $('#board').classList.toggle('opening', S.game === 'chest' && S.animating);
+  for (const c of GAMES[S.game].cells) {
+    const el = cellEls[c]; if (!el) continue;
+    const amt = S.myBets[c] || 0;
+    el.classList.toggle('has', amt > 0);
+    el.querySelector('.stake').textContent = amt ? fmtShort(amt) : '';
+    el.querySelector('.marks').innerHTML = v.players
+      .filter(p => p.id !== S.myId && p.ready && p.bets[c])
+      .map(p => `<i style="background:${p.color}" title="${esc(p.name)}: ${fmt(p.bets[c])}"></i>`).join('');
+    const kind = S.game === 'chest' && lr ? lr.outcome.chests[+c - 1] : null;
+    const hit = !!lr && (S.game === 'cards' ? cardsWin(cardsTotal(lr.outcome)) : S.game === 'dice' ? cellWins(c, lr.ev) : S.game === 'chest' ? kind !== 'empty' : lr.outcome.color === c);
+    if (S.game === 'chest') {
+      el.classList.toggle('open', !!lr);
+      el.classList.remove('k-big', 'k-small', 'k-empty');
+      if (kind) el.classList.add('k-' + kind);
+      el.querySelector('.cres').textContent = kind ? (kind === 'empty' ? 'Пусто' : multTxt(CHEST_PRIZES[kind].mult)) : '';
+    }
+    const myLast = lr && lr.res && lr.res.bets ? lr.res.bets[c] : 0;
+    el.classList.toggle('hit', hit);
+    el.classList.toggle('won', hit && !!myLast);
+    el.classList.toggle('lost', !hit && !!myLast);
+    el.querySelector('.why').textContent = '';
+  }
+}
+function renderBetInfo() {
+  const total = sumBets(S.myBets), n = Object.keys(S.myBets).length;
+  $('#betInfo').innerHTML = total
+    ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
+    : S.game === 'cards' ? 'Выберите фишку и нажмите на поле ставки' : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
+  $('#limitInfo').textContent = S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–29' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
+    : isInf() ? 'Без лимита · одна цифра за раунд'
+    : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
+}
+function renderActions() {
+  const m = me(), open = bettingOpen(), locked = isLocked();
+  const total = sumBets(S.myBets), solo = S.view.players.length === 1, g = GAMES[S.game];
+  $('#btnUndo').disabled = locked || !S.stack.length;
+  $('#btnClear').disabled = locked || !total;
+  $('#btnRepeat').disabled = locked || !S.lastBets;
+  const main = $('#btnMain');
+  main.className = 'btn btn-gold';
+  if (solo) {
+    main.textContent = S.animating ? g.busy : g.action;
+    main.disabled = !open || S.submitting || !total || !!(m && m.ready);
+  } else if (m && m.ready) {
+    main.textContent = 'Изменить ставки';
+    main.className = 'btn btn-ghost';
+    main.disabled = !open;
+  } else {
+    main.textContent = total ? 'Готов' : 'Пропустить раунд';
+    main.disabled = !open || S.submitting;
+  }
+  const force = $('#btnForce');
+  force.hidden = !(S.role === 'host' && !solo);
+  force.disabled = !open || !S.view.players.some(p => p.ready);
+}
+function renderStatus() {
+  const box = $('#status'), el = box.firstElementChild, v = S.view;
+  if (!v) return;
+  const m = me();
+  let t, urgent = false;
+  if (S.animating) t = S.game === 'cards' ? 'Кубик брошен, карты раздаются…' : S.game === 'dice' ? 'Кубики в игре…' : S.game === 'chest' ? 'Сундуки открываются…' : 'Цвет выбирается…';
+  else if (v.phase !== 'betting') t = 'Подсчёт выигрышей…';
+  else if (v.players.length === 1) {
+    t = sumBets(S.myBets) ? `Ставка сделана. Жмите «${GAMES[S.game].action}»`
+      : myBalance() < CHIPS[0].v ? 'Фишки закончились. Заберите бонус дня в меню' : 'Делайте ставки или пригласите друзей';
+  } else {
+    const rc = v.players.filter(p => p.ready).length;
+    t = m && m.ready ? `Ставки приняты · готовы ${rc} из ${v.players.length}` : `Делайте ставки · готовы ${rc} из ${v.players.length}`;
+    const left = S.localDeadline - Date.now();
+    if (S.localDeadline && left > 0) { t += ` · ${Math.ceil(left / 1000)} с`; urgent = left <= 5000 && !(m && m.ready); }
+  }
+  el.textContent = t;
+  box.classList.toggle('urgent', urgent);
+}
+function renderCardsTray() {
+  if (S.game !== 'cards') return;
+  const lr = S.lastRoll, box = $('#crCards'), tot = $('#crTotal'), zone = $('#crZone');
+  if (!lr) { box.innerHTML = ''; box.dataset.k = ''; tot.textContent = '—'; tot.className = ''; zone.textContent = 'нужно 11–29'; return; }
+  const o = lr.outcome, sum = cardsTotal(o), win = cardsWin(sum), key = o.cards.map(c => c.r + c.s + c.v).join();
+  if (box.dataset.k !== key) { box.innerHTML = o.cards.map(c => cardHtml(c)).join(''); box.dataset.k = key; }
+  tot.textContent = sum; tot.className = win ? 'win' : 'lose';
+  zone.textContent = win ? `Победа ×${CARD_MULT}` : sum < CARD_MIN ? 'Недобор: нужно 11+' : 'Перебор: нужно до 29';
+}
+function renderColorTray() {
+  if (S.game !== 'color') return;
+  $('#duel').hidden = !S.view.duel;
+  const lr = S.lastRoll;
+  if (lr) setOrb(lr.outcome.color, '×' + colorOf(lr.outcome.color).mult);
+  else setOrb(null);
+}
+function renderRollInfo() {
+  const el = $('#rollInfo'), g = GAMES[S.game];
+  if (S.animating) { el.innerHTML = `<div class="ri-main rolling">${g.busy}</div>`; return; }
+  if (!S.lastRoll) { el.innerHTML = `<div class="ri-main idle">${g.idle}</div>`; return; }
+  const {outcome, ev, res} = S.lastRoll;
+  let h;
+  if (S.game === 'cards') {
+    const sum = cardsTotal(outcome), n = outcome.cards.length;
+    h = `<div class="ri-main"><span class="dv">${outcome.die}</span><span class="op">→ ${n} ${cardWord(n)} =</span><span class="tot">${sum}</span></div>`;
+    h += `<div class="ri-sub">${cardsWin(sum) ? `Сумма в зоне <b>${CARD_MIN}–${CARD_MAX}</b>: победа ×${CARD_MULT}` : sum < CARD_MIN ? `Недобор: нужно <b>${CARD_MIN}</b> или больше` : `Перебор: нужно <b>${CARD_MAX}</b> или меньше`}</div>`;
+  } else if (S.game === 'chest') {
+    const idx = res && res.staked > 0 ? +Object.keys(res.bets)[0] - 1 : -1;
+    const kind = idx >= 0 ? outcome.chests[idx] : null;
+    if (kind) {
+      const pr = CHEST_PRIZES[kind];
+      h = `<div class="ri-main">${pr.mult ? `<span class="cpill">${pr.name}</span><span class="tot">${multTxt(pr.mult)}</span>` : '<span class="cpill">Пустой сундук</span>'}</div>`;
+    } else {
+      const big = outcome.chests.filter(k => k === 'big').length, small = outcome.chests.filter(k => k === 'small').length;
+      h = `<div class="ri-main"><span class="cpill">Сундуки открыты</span></div><div class="ri-sub">Больших призов: <b>${big}</b> · маленьких: <b>${small}</b></div>`;
+    }
+  } else if (S.game === 'dice') {
+    h = `<div class="ri-main"><span class="dv">${outcome.dice[0]}</span><span class="tot">×${DICE_MULT}</span></div>`;
+    h += `<div class="ri-sub">Выигрывает цифра: <b>${outcome.dice[0]}</b></div>`;
+  } else {
+    const col = colorOf(outcome.color);
+    h = `<div class="ri-main"><span class="cpill"><i class="sphere ${col.id}"></i>${col.name}</span><span class="tot">×${col.mult}</span></div>`;
+    if (outcome.duel) h += '<div class="ri-sub">Это была <b>Дуэль</b>: угадавшие получили +50%</div>';
+  }
+  if (res && res.staked > 0) {
+    h += res.payout > 0
+      ? `<div class="ri-res win">Выигрыш ${fmt(res.payout)} (${signed(res.payout - res.staked)})${res.bonus ? ` · бонус дуэли +${fmt(res.bonus)}` : ''}</div>`
+      : `<div class="ri-res lose">Ставка ${fmt(res.staked)} не сыграла</div>`;
+  }
+  el.innerHTML = h;
+}
+function renderHistory() {
+  const hist = (S.view.history || []).slice(0, S.game === 'dice' ? 8 : S.game === 'chest' ? 5 : 14);
+  if (S.game === 'cards') {
+    $('#history').innerHTML = hist.filter(h => h && typeof h.n === 'number').map(h => `<span class="cr-h ${cardsWin(h.n) ? 'win' : 'lose'}">${h.n}</span>`).join('');
+    return;
+  }
+  if (S.game === 'chest') {
+    $('#history').innerHTML = hist.filter(Array.isArray).map(h => `<span class="chest-h">${h.map(k => `<i class="${k}"></i>`).join('')}</span>`).join('');
+    return;
+  }
+  $('#history').innerHTML = S.game === 'dice'
+    ? hist.map(d => `<span><b style="margin:0">${d[0]}</b></span>`).join('')
+    : hist.map(h => `<span class="sphere ${h.c}${h.duel ? ' duel' : ''}" title="${colorOf(h.c).name}${h.duel ? ' · дуэль' : ''}"></span>`).join('');
+}
+// В бесконечном режиме вместо баланса показываем итог сессии
+function balText(p) {
+  if (!S.view.infinite) return fmt(p.balance);
+  return p.net ? `∞ · итог ${signed(p.net)}` : '∞';
+}
+function renderPlayers() {
+  const ps = S.view.players;
+  const canInvite = S.role === 'host' || !!S.code;
+  let html = ps.map(p => `<div class="seat ${p.id === S.myId ? 'me' : ''}">
+      <div class="avatar" style="--pc:${p.color}">${avatarInner(p.name, p.avatar)}</div>
+      <div class="seat-info"><div class="seat-name">${esc(p.name)}${p.id === S.myId ? ' <span class="muted">(вы)</span>' : ''}${p.host ? ic('crown') : ''}</div>
+      <div class="seat-bal"><span class="coin sm"></span>${balText(p)}</div></div>
+      ${p.ready ? '<span class="tag ok">Готов</span>' : '<span class="tag">Ставит</span>'}</div>`).join('');
+  for (let i = ps.length; i < MAX_PLAYERS; i++) {
+    html += `<button class="seat empty" data-invite ${canInvite ? '' : 'disabled'}><div class="avatar empty">${ic('userplus')}</div>
+      <div class="seat-info"><div class="seat-name">Свободное место</div><div class="seat-bal">Пригласить по ссылке</div></div></button>`;
+  }
+  $('#players').innerHTML = html;
+  let mini = ps.map(p => `<div class="pm ${p.ready ? 'ready' : ''}"><div class="avatar sm" style="--pc:${p.color}">${avatarInner(p.name, p.avatar)}</div>${esc(p.name)} <b>${balText(p)}</b></div>`).join('');
+  if (canInvite && ps.length < MAX_PLAYERS) mini += `<button class="pm add" data-invite><div class="avatar sm empty">${ic('userplus')}</div>Пригласить</button>`;
+  $('#playersMini').innerHTML = mini;
+}
+function addChat(msg) {
+  const log = $('#chatLog');
+  const row = document.createElement('div');
+  row.className = 'chat-row' + (msg.sys ? ' sys' : '');
+  if (msg.sys) row.textContent = msg.text;
+  else {
+    const b = document.createElement('b');
+    b.style.color = msg.color || 'var(--gold-2)';
+    b.textContent = msg.from;
+    row.appendChild(b);
+    row.appendChild(document.createTextNode(msg.text));
+  }
+  log.appendChild(row);
+  while (log.children.length > 200) log.firstChild.remove();
+  log.scrollTop = log.scrollHeight;
+  if (!msg.sys && isNarrow() && !$('#side').classList.contains('open')) {
+    S.unread++;
+    renderTopbar();
+  }
+}
+
+// ================= Экраны и модалки =================
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+}
+function openModal(id) { $('#' + id).classList.add('open'); }
+function closeModal(id) { $('#' + id).classList.remove('open'); }
+function confirmDialog(text) {
+  return new Promise(resolve => {
+    $('#confirmText').textContent = text;
+    openModal('modalConfirm');
+    const done = v => { closeModal('modalConfirm'); $('#confirmYes').onclick = $('#confirmNo').onclick = null; resolve(v); };
+    $('#confirmYes').onclick = () => done(true);
+    $('#confirmNo').onclick = () => done(false);
+  });
+}
+function openRules() {
+  const game = S.role ? S.game : profile.game;
+  $('#rulesTitle').textContent = 'Правила · ' + GAMES[game].title;
+  $('#rulesDice').hidden = game !== 'dice';
+  $('#rulesColor').hidden = game !== 'color';
+  $('#rulesChest').hidden = game !== 'chest';
+  $('#rulesCards').hidden = game !== 'cards';
+  openModal('modalRules');
+}
+function renderModeSeg() {
+  const inf = !!profile.infinite;
+  document.querySelectorAll('#modeSeg .seg-btn').forEach(b => b.classList.toggle('active', (b.dataset.inf === '1') === inf));
+  $('#segHint').textContent = inf
+    ? 'Ставки без лимита, ваш баланс не меняется. Друзья за вашим столом тоже играют без риска.'
+    : 'Игра на ваш баланс фишек.';
+}
+function renderGamePick() {
+  const game = profile.game;
+  document.querySelectorAll('#gamePick .game-card').forEach(b => b.classList.toggle('sel', b.dataset.game === game));
+  $('#screen-menu').classList.toggle('sel-color', game === 'color');
+  $('#screen-menu').classList.toggle('sel-chest', game === 'chest');
+  $('#screen-menu').classList.toggle('sel-cards', game === 'cards');
+  $('#wordmark').innerHTML = game === 'dice'
+    ? '<span class="wtxt wc">LUCK</span><span class="wtxt wc">CUBE</span>'
+    : game === 'cards' ? '<span class="wtxt wc">CARD</span><span class="wtxt wc">ROLL</span>'
+    : game === 'chest' ? '<span class="wtxt wc">GOLDEN</span><span class="wtxt wc">PICK</span>'
+    : '<span class="wtxt wc">COLOR</span><span class="wtxt wc">CLASH</span>';
+  $('#tagline').textContent = GAMES[game].tagline;
+}
+function renderMenu() {
+  renderGamePick();
+  renderModeSeg();
+  $('#menuName').textContent = profile.name;
+  $('#menuAvatar').innerHTML = avatarInner(profile.name, profile.avatar);
+  $('#menuBal').textContent = fmt(profile.balance);
+  $('#dailyDot').hidden = !dailyStatus().canClaim;
+}
+function goMenu() {
+  show('screen-menu');
+  renderMenu();
+  if (!pendingRoom && !S.dailyShown && dailyStatus().canClaim) { S.dailyShown = true; renderDaily(); openModal('modalDaily'); }
+}
+function enterGame() {
+  const screen = $('#screen-game');
+  screen.classList.toggle('g-dice', S.game === 'dice');
+  screen.classList.toggle('g-color', S.game === 'color');
+  screen.classList.toggle('g-chest', S.game === 'chest');
+  screen.classList.toggle('g-cards', S.game === 'cards');
+  buildBoard(S.game);
+  setOrb(null);
+  $('#chatLog').innerHTML = '';
+  S.unread = 0; S.lastRoll = null;
+  show('screen-game');
+  requestWake();
+  render();
+}
+function openSide() { $('#side').classList.add('open'); $('#backdrop').classList.add('open'); S.unread = 0; if (S.view) renderTopbar(); }
+function closeSide() { $('#side').classList.remove('open'); $('#backdrop').classList.remove('open'); }
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+
+let wakeLock = null;
+async function requestWake() {
+  try { if ('wakeLock' in navigator && S.role) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function releaseWake() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+// ================= Рисование аватарки =================
+const AV_COLORS = ['#111111', '#ffffff', '#e0485c', '#ff8a65', '#f6dd8f', '#3ddc97', '#4a86f0', '#c792ea', '#8a5a2b'];
+const avDraw = {color: AV_COLORS[0], size: 14, eraser: false, down: false, lx: 0, ly: 0};
+function avCtx() { return $('#drawCanvas').getContext('2d'); }
+function avRender() {
+  $('#swatches').innerHTML = AV_COLORS.map(c => `<button class="sw ${!avDraw.eraser && avDraw.color === c ? 'sel' : ''}" data-c="${c}" style="--c:${c}"></button>`).join('');
+  document.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', +b.dataset.size === avDraw.size));
+  $('#btnEraser').classList.toggle('on', avDraw.eraser);
+}
+function openAvatar() {
+  const cv = $('#drawCanvas'), ctx = avCtx();
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  openModal('modalAvatar');
+  avRender();
+  if (profile.avatar) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    img.src = profile.avatar;
+  }
+}
+function avPoint(e) {
+  const cv = $('#drawCanvas'), r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height];
+}
+function avStroke(x0, y0, x1, y1) {
+  const ctx = avCtx();
+  ctx.globalCompositeOperation = avDraw.eraser ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = ctx.fillStyle = avDraw.color;
+  ctx.lineWidth = avDraw.size; ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+}
+function saveAvatar() {
+  const src = $('#drawCanvas');
+  for (const px of [96, 72, 56]) {
+    const out = document.createElement('canvas'); out.width = out.height = px;
+    out.getContext('2d').drawImage(src, 0, 0, px, px);
+    const url = out.toDataURL('image/png');
+    if (cleanAvatar(url)) {
+      profile.avatar = url; saveProfile(); renderMenu(); closeModal('modalAvatar');
+      toast('Аватарка сохранена', 'ok');
+      return;
+    }
+  }
+  toast('Рисунок слишком сложный, упростите его', 'err');
+}
+function initAvatarEditor() {
+  const cv = $('#drawCanvas');
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    const [x, y] = avPoint(e);
+    avDraw.down = true; avDraw.lx = x; avDraw.ly = y;
+    avStroke(x, y, x + .01, y);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!avDraw.down) return;
+    e.preventDefault();
+    const [x, y] = avPoint(e);
+    avStroke(avDraw.lx, avDraw.ly, x, y);
+    avDraw.lx = x; avDraw.ly = y;
+  });
+  const end = () => { avDraw.down = false; };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  $('#swatches').onclick = e => { const b = e.target.closest('.sw'); if (!b) return; avDraw.color = b.dataset.c; avDraw.eraser = false; avRender(); };
+  document.querySelectorAll('[data-size]').forEach(b => b.onclick = () => { avDraw.size = +b.dataset.size; avRender(); });
+  $('#btnEraser').onclick = () => { avDraw.eraser = !avDraw.eraser; avRender(); };
+  $('#btnDrawClear').onclick = () => avCtx().clearRect(0, 0, cv.width, cv.height);
+  $('#btnAvatarSave').onclick = saveAvatar;
+  $('#btnAvatarReset').onclick = () => { delete profile.avatar; saveProfile(); renderMenu(); closeModal('modalAvatar'); };
+  $('#menuAvatar').classList.add('editable');
+  $('#menuAvatar').onclick = openAvatar;
+}
+
+// ================= Старт =================
+function init() {
+  document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
+  buildDice();
+  initAvatarEditor();
+  document.querySelectorAll('.hero-chests').forEach(h => { h.innerHTML = chestClosed().repeat(3); });
+  document.querySelectorAll('.hero-cards').forEach(h => { h.innerHTML = HERO_CARDS.map(c => cardHtml(c, '', `transform:rotate(${c.rot}deg)`)).join(''); });
+
+  const param = new URLSearchParams(location.search).get('room');
+  if (param) pendingRoom = param;
+
+  $('#btnRegister').onclick = () => {
+    const name = cleanName($('#regName').value);
+    if (!name) return toast('Введите имя', 'err');
+    profile = {name, balance: START_BALANCE, lastClaim: null, streak: 0, sound: true, game: 'dice', created: Date.now()};
+    saveProfile();
+    toast(`Добро пожаловать! +${fmt(START_BALANCE)} фишек`, 'ok');
+    goMenu();
+    if (pendingRoom) joinRoom(pendingRoom);
+  };
+  $('#regName').onkeydown = e => { if (e.key === 'Enter') $('#btnRegister').click(); };
+
+  $('#gamePick').onclick = e => {
+    const b = e.target.closest('.game-card'); if (!b) return;
+    profile.game = b.dataset.game; saveProfile(); sfxChip(); renderGamePick();
+  };
+  $('#modeSeg').onclick = e => {
+    const b = e.target.closest('.seg-btn'); if (!b) return;
+    profile.infinite = b.dataset.inf === '1'; saveProfile(); sfxChip(); renderModeSeg();
+  };
+  $('#btnPlay').onclick = () => { audio(); startTable(); };
+  $('#btnCancelConn').onclick = () => { if (cancelConnecting) cancelConnecting(); else hideConnecting(); };
+  $('#btnDaily').onclick = () => { renderDaily(); openModal('modalDaily'); };
+  $('#btnClaim').onclick = claimDaily;
+  $('#btnRules').onclick = openRules;
+  $('#btnRename').onclick = () => { $('#nameInput').value = profile.name; openModal('modalName'); };
+  $('#btnSaveName').onclick = () => {
+    const n = cleanName($('#nameInput').value);
+    if (!n) return toast('Введите имя', 'err');
+    profile.name = n; saveProfile(); renderMenu(); closeModal('modalName');
+  };
+
+  $('#btnBack').onclick = async () => {
+    const others = S.view && S.view.players.length > 1;
+    if (S.role === 'client' && !(await confirmDialog('Покинуть стол?'))) return;
+    if (S.role === 'host' && others && !(await confirmDialog('Закрыть стол для всех игроков?'))) return;
+    leaveGame();
+  };
+  $('#btnSound').onclick = () => { profile.sound = !profile.sound; saveProfile(); renderTopbar(); };
+  $('#btnInvite').onclick = showInvite;
+  $('#btnCopyLink').onclick = copyInvite;
+  $('#btnShareLink').onclick = shareInvite;
+  $('#btnInviteRetry').onclick = () => { if (room && !S.code) { attachPeer(room); renderInvite(); } };
+  document.addEventListener('click', e => { const t = e.target.closest('[data-invite]'); if (t && !t.disabled) showInvite(); });
+  $('#btnChat').onclick = openSide;
+  $('#btnCloseSide').onclick = closeSide;
+  $('#backdrop').onclick = closeSide;
+  $('#chatForm').onsubmit = e => {
+    e.preventDefault();
+    const inp = $('#chatInput'), text = inp.value.trim();
+    if (!text) return;
+    sendToHost({t:'chat', text: text.slice(0, 200)});
+    inp.value = '';
+  };
+
+  const board = $('#board');
+  board.addEventListener('click', e => { const el = e.target.closest('.cell'); if (el) placeChip(el.dataset.cell); });
+  board.addEventListener('contextmenu', e => { const el = e.target.closest('.cell'); if (!el) return; e.preventDefault(); removeCell(el.dataset.cell); });
+  $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; S.chip = +b.dataset.v; sfxChip(); renderChips(); });
+  $('#btnUndo').onclick = undo;
+  $('#btnClear').onclick = clearBets;
+  $('#btnRepeat').onclick = repeatBets;
+  $('#btnMain').onclick = onMain;
+  $('#btnForce').onclick = () => sendToHost({t:'force'});
+
+  document.querySelectorAll('.modal').forEach(m => {
+    if (m.id === 'modalConfirm' || m.id === 'modalConnecting') return;
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.classList.remove('open'); });
+  });
+  document.addEventListener('pointerdown', () => audio(), {once: true});
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.role) requestWake(); });
+  window.addEventListener('beforeunload', () => { if (room && room.peer) room.destroy(); });
+
+  setInterval(tick, 250);
+
+  if (profile) {
+    if (typeof profile.sound !== 'boolean') profile.sound = true;
+    if (!GAMES[profile.game]) profile.game = 'dice';
+    goMenu();
+    if (pendingRoom) joinRoom(pendingRoom);
+  } else {
+    $('#regInvite').hidden = !pendingRoom;
+    show('screen-register');
+  }
+
+  // Заранее подгружаем сетевой модуль, чтобы стол быстрее появлялся в сети
+  setTimeout(() => loadPeer().catch(() => {}), pendingRoom ? 0 : 1500);
+}
+init();
+</script>
+</body>
+</html>
