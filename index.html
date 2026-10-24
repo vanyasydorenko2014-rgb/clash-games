@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Luck Cube, Color Clash, Golden Pick и Card Roll — играйте против дилера или с друзьями за одним столом.">
+<meta name="description" content="Luck Cube, Color Clash, Golden Pick, Card Roll и Gymnast Jump — играйте против дилера или с друзьями за одним столом.">
 <title>Clash Game</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -361,7 +361,7 @@ svg{display:block}
 .tools-row .btn.on{background:rgba(226,190,106,.2);border-color:var(--gold-2)}
 
 /* ---------- Golden Pick ---------- */
-.games .game-card[data-game=chest],.games .game-card[data-game=cards]{grid-column:span 2;flex-direction:row;align-items:center;gap:14px}
+.games .game-card[data-game=chest],.games .game-card[data-game=cards],.games .game-card[data-game=gym]{grid-column:span 2;flex-direction:row;align-items:center;gap:14px}
 .gc-text{display:flex;flex-direction:column;gap:3px}
 .gc-text small{margin-top:0}
 .hero-chests{display:none;justify-content:center;align-items:flex-end;gap:clamp(14px,5vw,26px);padding:22px 0 24px}
@@ -445,6 +445,28 @@ svg{display:block}
 .history .cr-h.win{color:var(--win);border-color:rgba(61,220,151,.4)}
 .history .cr-h.lose{color:#ff9b9b}
 
+/* ---------- Gymnast Jump ---------- */
+.hero-gym{display:none;justify-content:center;align-items:flex-end;padding:14px 0 20px}
+.hero-gym svg{width:clamp(170px,50vw,220px);height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));animation:float 4s ease-in-out infinite}
+.sel-gym .hero-gym{display:flex}
+.sel-gym .hero-dice-menu{display:none}
+.g-gym .tray-dice,.g-gym .tray-color{display:none}
+.tray-gym{display:none;padding:2px 0 0}
+.g-gym .tray-gym{display:flex}
+.gym-scene{width:100%;max-width:460px;height:auto;display:block;border-radius:18px;box-shadow:0 10px 30px -12px rgba(0,0,0,.7),0 0 0 1px rgba(226,190,106,.25)}
+.gz{transition:opacity .3s ease}
+.gpl{cursor:pointer}
+.gpl .slab{transition:filter .2s}
+.gpl.sel .slab{filter:drop-shadow(0 0 6px rgba(251,236,192,.95))}
+.gpl.sel .gpl-lbl{fill:#fff}
+.board.gym{grid-template-columns:repeat(3,1fr);gap:10px}
+.gcell.h1{--cg:linear-gradient(160deg,#3ac6a0,#0d5a4a)}
+.gcell.h2{--cg:linear-gradient(160deg,#f6dd8f,#9a7426);color:#241904}
+.gcell.h3{--cg:linear-gradient(160deg,#e0485c,#7d0d1f)}
+.history .gym-h{display:inline-flex;gap:4px;padding:6px 9px}
+.gym-h i{width:9px;height:9px;border-radius:50%;background:#ff6b6b}
+.gym-h i.ok{background:var(--win)}
+
 /* ---------- Модальные окна ---------- */
 .modal{position:fixed;inset:0;background:rgba(2,4,6,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
 .modal.open{display:flex;animation:fade .2s ease}
@@ -519,6 +541,7 @@ svg{display:block}
       <div class="hero-orbs"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></div>
       <div class="hero-chests"></div>
       <div class="hero-cards"></div>
+      <div class="hero-gym"></div>
       <h1 class="wordmark" id="wordmark"></h1>
       <p class="tagline" id="tagline"></p>
       <div class="divider"><i></i></div>
@@ -528,6 +551,7 @@ svg{display:block}
       <button class="game-card" data-game="color"><span class="gc-ico trio"><i class="sphere red"></i><i class="sphere blue"></i><i class="sphere gold"></i></span><b>Color Clash</b><small>Угадай цвет · до ×5</small></button>
       <button class="game-card" data-game="chest"><span class="gc-ico" data-ic="chest"></span><span class="gc-text"><b>Golden Pick</b><small>5 сундуков · приз до ×5</small></span></button>
       <button class="game-card" data-game="cards"><span class="gc-ico" data-ic="cards"></span><span class="gc-text"><b>Card Roll</b><small>Кубик · карты · сумма 11–24 · ×2</small></span></button>
+      <button class="game-card" data-game="gym"><span class="gc-ico" data-ic="gym"></span><span class="gc-text"><b>Gymnast Jump</b><small>3 высоты · матрас или пустота · до ×5</small></span></button>
     </div>
     <div class="seg" id="modeSeg">
       <button class="seg-btn" data-inf="0">Обычная игра</button>
@@ -570,6 +594,9 @@ svg{display:block}
             <div class="cr-sum"><small>Сумма</small><b id="crTotal">—</b><span class="cr-zone" id="crZone">нужно 11–24</span></div>
           </div>
           <div class="cr-cards" id="crCards"></div>
+        </div>
+        <div class="tray tray-gym">
+          <svg id="gymScene" class="gym-scene" viewBox="0 0 360 240" role="img" aria-label="Гимнаст и три платформы"></svg>
         </div>
         <div class="tray">
           <div class="roll-info" id="rollInfo"></div>
@@ -640,13 +667,20 @@ svg{display:block}
     <li>Ставка входит в выплату: 100 на сундук с ×5 → 500.</li>
     <li>Чтобы сыграть снова, нажмите на любой сундук — они закроются.</li>
   </ul>
+  <ul id="rulesGym" hidden>
+    <li>На экране гимнаст и <b>три платформы</b> разной высоты. Чем выше платформа, тем больше множитель: <b>×2</b>, <b>×3</b> и <b>×5</b>.</li>
+    <li>Выберите фишку и нажмите на высоту (на кнопку или на саму платформу). Ставка одна за раунд, нажатие на другую высоту переносит ставку на неё. Лимита на сумму нет.</li>
+    <li>Внизу — неизвестность: <b>матрас</b> или <b>пустое место</b>. Нажмите «Прыгать»: гимнаст прыгает с выбранной платформы.</li>
+    <li>Приземлился на матрас — выигрыш по множителю высоты. Ставка входит в выплату: 100 на высоту ×3 → 300. Матраса нет — ставка сгорает.</li>
+    <li>В каждом раунде <b>только один матрас</b>: он лежит под одной из трёх высот, под двумя другими пусто. Шансы, что матрас внизу: <b>×2 — 48%</b>, <b>×3 — 32%</b>, <b>×5 — 19%</b>. Чем выше прыжок, тем реже там матрас. Матрас не бывает под одной и той же высотой два раза подряд.</li>
+  </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
     <li>Выберите фишку и нажмите на цвет. За раунд ставка делается на <b>один цвет</b>, нажатие на другой цвет переносит ставку на него. Лимита на сумму нет.</li>
     <li>Когда все сделали ставки, выпадает один цвет. Угадали — получаете выплату, не угадали — ставка сгорает.</li>
     <li>Выплаты: <b>красный ×2</b>, <b>синий ×3</b>, <b>золотой ×5</b>. Ставка входит в выплату: 100 на синий → 300, чистая прибыль 200.</li>
     <li>Шансы: красный ≈48%, синий ≈32%, золотой ≈19%. Чем выше множитель, тем реже выпадает цвет.</li>
-    <li><b>Дуэль:</b> если один цвет выпал два раунда подряд, следующий раунд становится Дуэлью. Все, кто угадает цвет в Дуэли, получают <b>бонус +50%</b> к выигрышу.</li>
+    <li>Один и тот же цвет <b>не выпадает два раза подряд</b>.</li>
   </ul>
   <ul>
     <li><b>Бесконечные фишки:</b> режим без риска. Баланс не меняется, лимита на сумму ставки нет, есть фишки до 10M. За столом считается итог сессии.</li>
@@ -783,7 +817,9 @@ const GAMES = {
   chest: {title:'Golden Pick', brand:'GOLDEN PICK', tagline:'Выбери сундук · найди приз', cells:['1','2','3','4','5'], maxCells: 1, limited: false,
     action:'Открыть сундук', busy:'Сундуки открываются…', idle:'Выберите сундук и сделайте ставку'},
   cards: {title:'Card Roll', brand:'CARD ROLL', tagline:'Кубик · карты · сумма 11–24', cells:['bet'], maxCells: 1, limited: false,
-    action:'Бросить кубик', busy:'Раздача…', idle:'Сделайте ставку и бросайте кубик'}
+    action:'Бросить кубик', busy:'Раздача…', idle:'Сделайте ставку и бросайте кубик'},
+  gym: {title:'Gymnast Jump', brand:'GYMNAST JUMP', tagline:'Выбери высоту · найди матрас', cells:['1','2','3'], maxCells: 1, limited: false,
+    action:'Прыгать', busy:'Гимнаст в прыжке…', idle:'Выберите высоту и сделайте ставку'}
 };
 // Golden Pick: содержимое каждого сундука выбирается случайно и независимо (возврат ≈94%)
 const CHEST_PRIZES = {
@@ -801,6 +837,156 @@ function drawChests() {
   return c;
 }
 const colorOf = id => COLORS.find(c => c.id === id);
+
+// ================= Gymnast Jump =================
+// Три высоты, матрас только ОДИН: он лежит под высотой с весом w из 99 (48:32:19). Под остальными пусто. Возврат ≈96–97%.
+const GYM = [
+  {id:'1', name:'Высота 1', mult:2, w:48},
+  {id:'2', name:'Высота 2', mult:3, w:32},
+  {id:'3', name:'Высота 3', mult:5, w:19}
+];
+const GYM_W = GYM.reduce((t, h) => t + h.w, 0);
+// prev — высота с матрасом в прошлом раунде: она не может выпасть снова подряд
+function drawGym(prev) {
+  const k = drawNoRepeat(GYM.map(h => h.w), prev);
+  return {land: GYM.map((h, i) => i === k)};
+}
+const GYM_H = [44, 92, 140], GY_FLOOR = 196, MAT_H = 13;
+const gymTop = i => GY_FLOOR - GYM_H[i];
+const gymPillarX = i => i * 120 + 34;
+const gymZoneX = i => i * 120 + 90;
+const G = {ready: false, tok: 0, cur: null, mode: null, at: null};
+const SKIN = '#f2c9a0', LEO = '#e0485c', HAIR = '#3b2412';
+const gymStand = () => `<path d="M0 -17 L-4.5 0 M0 -17 L4.5 0" stroke="${SKIN}" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+  <path d="M0 -26 L-8 -41 M0 -26 L8 -41" stroke="${SKIN}" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+  <path d="M0 -26 L0 -17" stroke="${LEO}" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="-4.5" cy="0" r="1.8" fill="#fff"/><circle cx="4.5" cy="0" r="1.8" fill="#fff"/>
+  <circle cx="0" cy="-33" r="5.2" fill="${SKIN}"/><path d="M-5.4 -33.6a5.4 5.4 0 0 1 10.8 0z" fill="${HAIR}"/><circle cx="-6" cy="-36" r="2.6" fill="${HAIR}"/>`;
+const gymTuck = () => `<path d="M0 -17 L8 -12 L1 -8 M0 -17 L6 -9 L-1 -5" stroke="${SKIN}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M0 -26 L9 -20 L8 -12" stroke="${SKIN}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M0 -26 L0 -17" stroke="${LEO}" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="3" cy="-31" r="5.2" fill="${SKIN}"/><path d="M-2.4 -31.6a5.4 5.4 0 0 1 10.8 0z" fill="${HAIR}"/><circle cx="-3" cy="-34" r="2.6" fill="${HAIR}"/>`;
+function gymSceneHtml() {
+  let s = `<defs>
+    <linearGradient id="gsWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17493c"/><stop offset="1" stop-color="#0a281f"/></linearGradient>
+    <linearGradient id="gsFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a2b"/><stop offset="1" stop-color="#3f2610"/></linearGradient>
+    <linearGradient id="gsSlab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1c6"/><stop offset="1" stop-color="#b08936"/></linearGradient>
+    <linearGradient id="gsPil" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dfe6ec"/><stop offset="1" stop-color="#8795a4"/></linearGradient>
+    <linearGradient id="gsMat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa0ff"/><stop offset="1" stop-color="#2150b8"/></linearGradient>
+    <linearGradient id="gsPit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#1c0d10"/></linearGradient>
+    <clipPath id="gsClip"><rect width="360" height="240" rx="18"/></clipPath></defs>
+  <g clip-path="url(#gsClip)">
+  <rect width="360" height="240" fill="url(#gsWall)"/>`;
+  for (let y = 36; y < 196; y += 32) s += `<path d="M0 ${y}H360" stroke="rgba(255,255,255,.05)" stroke-width="2"/>`;
+  s += `<rect y="${GY_FLOOR}" width="360" height="44" fill="url(#gsFloor)"/>`;
+  for (let x = 30; x < 360; x += 30) s += `<path d="M${x} ${GY_FLOOR}V240" stroke="rgba(0,0,0,.22)" stroke-width="1"/>`;
+  s += `<rect y="${GY_FLOOR}" width="360" height="2.5" fill="rgba(226,190,106,.55)"/>`;
+  for (let i = 0; i < 3; i++) {
+    const zx = i * 120 + 68;
+    s += `<g class="gz" id="gzp${i}" style="opacity:0"><rect x="${zx}" y="${GY_FLOOR}" width="44" height="44" fill="url(#gsPit)"/><path d="M${zx} ${GY_FLOOR}H${zx + 44}" stroke="#000" stroke-width="3"/><text x="${zx + 22}" y="224" text-anchor="middle" font-size="15" font-weight="800" fill="rgba(255,107,107,.55)">✕</text></g>
+    <g class="gz" id="gzm${i}" style="opacity:0"><rect x="${zx - 3}" y="${GY_FLOOR - MAT_H}" width="50" height="${MAT_H}" rx="5" fill="url(#gsMat)" stroke="#0f2a5f" stroke-width="1.5"/><path d="M${zx + 12} ${GY_FLOOR - MAT_H + 1}v${MAT_H - 2}M${zx + 32} ${GY_FLOOR - MAT_H + 1}v${MAT_H - 2}" stroke="rgba(255,255,255,.45)" stroke-width="1.5"/></g>
+    <g class="gz" id="gzc${i}"><rect x="${zx}" y="${GY_FLOOR - 30}" width="44" height="30" rx="7" fill="rgba(226,190,106,.16)" stroke="rgba(226,190,106,.7)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${zx + 22}" y="${GY_FLOOR - 8}" text-anchor="middle" font-size="22" font-weight="800" fill="#fbecc0" style="font-family:var(--serif)">?</text></g>`;
+  }
+  for (let i = 0; i < 3; i++) {
+    const x0 = i * 120 + 12, top = gymTop(i), bh = GY_FLOOR - top - 7;
+    s += `<g class="gpl" id="gpl${i}" data-cell="${i + 1}"><rect x="${x0}" y="${top + 7}" width="44" height="${bh}" fill="url(#gsPil)"/>
+      <rect class="slab" x="${x0 - 4}" y="${top}" width="52" height="8" rx="3" fill="url(#gsSlab)" stroke="#7f5a1b" stroke-width="1"/>
+      <text class="gpl-lbl" x="${x0 + 22}" y="${top + 7 + bh / 2 + 5}" text-anchor="middle" font-size="14" font-weight="800" fill="rgba(20,30,40,.7)" style="font-family:var(--serif)">×${GYM[i].mult}</text></g>`;
+  }
+  s += `<g id="gym" style="display:none"><g id="gpStand">${gymStand()}</g><g id="gpTuck" style="display:none">${gymTuck()}</g></g></g>`;
+  return s;
+}
+const gymHeroSvg = () => `<svg viewBox="0 0 200 150" aria-hidden="true">
+  <rect x="0" y="140" width="200" height="4" rx="2" fill="rgba(226,190,106,.55)"/>
+  ${[112, 84, 56].map((top, i) => `<rect x="${8 + i * 44}" y="${top + 6}" width="36" height="${134 - top}" fill="#aab6c2"/><rect x="${5 + i * 44}" y="${top}" width="42" height="7" rx="3" fill="#e2be6a" stroke="#7f5a1b"/>`).join('')}
+  <rect x="150" y="127" width="44" height="13" rx="5" fill="#3a78e8" stroke="#0f2a5f" stroke-width="1.5"/>
+  <path d="M120 36Q165 -4 172 122" fill="none" stroke="rgba(251,236,192,.7)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>
+  <g transform="translate(114 56)">${gymStand()}</g></svg>`;
+function gymSet(x, y, rot = 0, pose = 'stand', sy = 1) {
+  const g = $('#gym'); if (!g) return;
+  g.style.display = '';
+  g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(1 ${sy.toFixed(3)}) rotate(${rot.toFixed(1)} 0 -17)`);
+  $('#gpStand').style.display = pose === 'stand' ? '' : 'none';
+  $('#gpTuck').style.display = pose === 'tuck' ? '' : 'none';
+  G.cur = {x, y};
+}
+function gymHide() { const g = $('#gym'); if (g) g.style.display = 'none'; G.cur = null; }
+function gymZone(i, st) {
+  $('#gzc' + i).style.opacity = st === 'cover' ? 1 : 0;
+  $('#gzm' + i).style.opacity = st === 'mat' ? 1 : 0;
+  $('#gzp' + i).style.opacity = st === 'pit' ? 1 : 0;
+}
+function gymHop(from, tx, ty) {
+  const token = ++G.tok, t0 = performance.now(), D = 420, arc = 26 + Math.max(0, from.y - ty) * .3;
+  const f = now => {
+    if (token !== G.tok) return;
+    const k = Math.min(1, (now - t0) / D);
+    gymSet(from.x + (tx - from.x) * k, from.y + (ty - from.y) * k - arc * 4 * k * (1 - k), 0, 'stand');
+    if (k < 1) requestAnimationFrame(f);
+  };
+  requestAnimationFrame(f);
+}
+function sfxJump() { beep(330, .28, {type:'triangle', vol:.09, slide:2.2}); }
+function sfxLand(ok) {
+  if (ok) { beep(150, .14, {type:'sine', vol:.18, slide:.5}); beep(660, .12, {type:'triangle', vol:.06, at:.05}); }
+  else beep(420, .5, {type:'sawtooth', vol:.05, slide:.25});
+}
+// Прыжок: приседание → полёт с сальто → приземление на матрас (отскок) или падение в пустоту
+function animateGym(outcome, idx, session) {
+  const land = outcome.land[idx];
+  const T0 = 240, F = 800 + idx * 160, TL = T0 + F, BOUNCE = 480, FALL = 520, END = TL + (land ? BOUNCE : FALL) + 200;
+  const sx = gymPillarX(idx), sy0 = gymTop(idx), ex = gymZoneX(idx), ey = GY_FLOOR - (land ? MAT_H : 0);
+  const arc = 30 + idx * 8, spins = idx + 1;
+  const token = ++G.tok, start = performance.now();
+  G.mode = 'anim';
+  for (let i = 0; i < 3; i++) gymZone(i, 'cover');
+  gymSet(sx, sy0, 0, 'stand');
+  sfxJump(); vibrate(15);
+  let landed = false, rest = false;
+  const frame = now => {
+    if (token !== G.tok || session !== S.session) return;
+    const t = now - start;
+    if (t < T0) {
+      gymSet(sx, sy0, 0, 'stand', 1 - .16 * Math.sin(t / T0 * Math.PI));
+    } else if (t < TL) {
+      const k = (t - T0) / F;
+      gymSet(sx + (ex - sx) * k, sy0 + (ey - sy0) * k - arc * 4 * k * (1 - k), -360 * spins * Math.min(1, k / .85), k > .85 ? 'stand' : 'tuck');
+    } else {
+      if (!landed) { landed = true; gymZone(idx, land ? 'mat' : 'pit'); sfxLand(land); vibrate(land ? 25 : [30, 40, 30]); }
+      if (land) {
+        const kb = Math.min(1, (t - TL) / BOUNCE);
+        gymSet(ex, ey - 14 * Math.abs(Math.sin(kb * Math.PI * 2)) * (1 - kb), 0, 'stand', kb < .12 ? 1 - .15 * (1 - kb / .12) : 1);
+      } else {
+        const kf = Math.min(1, (t - TL) / FALL);
+        gymSet(ex, ey + 100 * kf * kf, 120 * kf, 'tuck');
+      }
+      if (!rest && t > TL + 450) { rest = true; for (let i = 0; i < 3; i++) if (i !== idx) gymZone(i, outcome.land[i] ? 'mat' : 'pit'); }
+    }
+    if (t < END) requestAnimationFrame(frame);
+    else { for (let i = 0; i < 3; i++) gymZone(i, outcome.land[i] ? 'mat' : 'pit'); if (land) gymSet(ex, ey, 0, 'stand'); else gymHide(); G.mode = 'res'; }
+  };
+  requestAnimationFrame(frame);
+}
+function renderGym() {
+  if (S.game !== 'gym' || !G.ready) return;
+  const lr = S.lastRoll, bets = Object.keys(S.myBets), sel = bets.length ? +bets[0] - 1 : -1;
+  if (sel >= 0) S.gymIdx = sel;
+  for (let i = 0; i < 3; i++) $('#gpl' + i).classList.toggle('sel', i === sel);
+  if (lr && lr.gymIdx != null && sel < 0) {          // итог раунда остаётся на сцене, пока игрок не сделает новую ставку
+    G.mode = 'res'; G.at = null; G.tok++;
+    const land = lr.outcome.land;
+    for (let i = 0; i < 3; i++) gymZone(i, land[i] ? 'mat' : 'pit');
+    if (land[lr.gymIdx]) gymSet(gymZoneX(lr.gymIdx), GY_FLOOR - MAT_H, 0, 'stand'); else gymHide();
+    return;
+  }
+  for (let i = 0; i < 3; i++) gymZone(i, 'cover');
+  const i = S.gymIdx || 0;
+  if (G.mode === 'idle' && G.at === i) return;
+  const from = G.cur;
+  G.mode = 'idle'; G.at = i;
+  if (from) gymHop(from, gymPillarX(i), gymTop(i));
+  else { G.tok++; gymSet(gymPillarX(i), gymTop(i), 0, 'stand'); }
+}
 
 // ================= Card Roll =================
 // Кубик 1–6 определяет, сколько карт из колоды в 52 карты получит игрок. Сумма 11–24 выигрывает ×2.
@@ -850,6 +1036,7 @@ const ICONS = {
   crown: '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-4-7z"/><path d="M5 20h14"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   chest: '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M3 11a9 9 0 0 1 18 0"/><path d="M3 15h18"/><path d="M12 13v4"/>',
+  gym: '<circle cx="12" cy="5" r="2"/><path d="M12 7v7"/><path d="M5 4l7 5 7-5"/><path d="M12 14l-4 7"/><path d="M12 14l4 7"/>',
   cards: '<rect x="3" y="4" width="12" height="16" rx="2" transform="rotate(-9 9 12)"/><rect x="9" y="4" width="12" height="16" rx="2" transform="rotate(9 15 12)"/>'
 };
 const ic = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
@@ -885,15 +1072,24 @@ const cleanAvatar = a => typeof a === 'string' && a.length <= 24000 && /^data:im
 const avatarInner = (name, av) => av ? `<img src="${av}" alt="">` : esc(initial(name));
 const initial = name => (String(name).trim()[0] || '?').toUpperCase();
 
+// Выбор из 3 вариантов с весами w без повтора прошлого (prev; -1 — первый раунд).
+// Переходы подобраны так, чтобы в долгой игре шансы остались ровно w (а значит, и возврат игроку не меняется).
+function drawNoRepeat(w, prev) {
+  if (!(prev >= 0)) { let r = rndInt(w[0] + w[1] + w[2]); for (let k = 0; k < 3; k++) { if (r < w[k]) return k; r -= w[k]; } }
+  const o = [0, 1, 2].filter(i => i !== prev), a = o[0], b = o[1];
+  const wa = w[prev] + w[a] - w[b], wb = w[prev] + w[b] - w[a];   // вес перехода (в половинках)
+  return rndInt(wa + wb) < wa ? a : b;
+}
 function rndInt(n) {
   const a = new Uint32Array(1), lim = Math.floor(2 ** 32 / n) * n;
   do crypto.getRandomValues(a); while (a[0] >= lim);
   return a[0] % n;
 }
 const rnd6 = () => rndInt(6) + 1;
-function drawColor() {
-  let r = rndInt(COLOR_W);
-  for (const c of COLORS) { if (r < c.w) return c.id; r -= c.w; }
+// prev — цвет прошлого раунда: он не может выпасть снова подряд
+function drawColor(prev) {
+  const ids = COLORS.map(c => c.id);
+  return ids[drawNoRepeat(COLORS.map(c => c.w), ids.indexOf(prev))];
 }
 function genCode() {
   const a = new Uint8Array(6); crypto.getRandomValues(a);
@@ -985,6 +1181,11 @@ function settleBets(game, bets, outcome) {
   } else if (game === 'cards') {
     const amt = bets.bet || 0;
     if (amt && cardsWin(cardsTotal(outcome))) { payout = Math.floor(amt * CARD_MULT); winCells.push('bet'); }
+  } else if (game === 'gym') {
+    for (const [cell, amt] of Object.entries(bets)) {
+      const h = GYM[+cell - 1];
+      if (h && outcome.land[+cell - 1]) { payout += Math.floor(amt * h.mult); winCells.push(cell); }
+    }
   } else if (game === 'chest') {
     for (const [cell, amt] of Object.entries(bets)) {
       const m = CHEST_PRIZES[outcome.chests[+cell - 1]].mult;
@@ -1013,7 +1214,7 @@ function cleanBets(b, game) {
 function validateBets(b, balance, game, unlimited) {
   const g = GAMES[game], keys = Object.keys(b), n = keys.length;
   if (!n) return null;
-  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : game === 'chest' ? 'Ставить можно только на один сундук' : 'Ставить можно только на одну цифру';
+  if (n > g.maxCells) return game === 'color' ? 'Ставка делается только на один цвет' : game === 'gym' ? 'Ставка делается только на одну высоту' : game === 'chest' ? 'Ставить можно только на один сундук' : 'Ставить можно только на одну цифру';
   if (g.limited && !unlimited) {
     const cap = n === 1 ? LIMIT_SINGLE : LIMIT_MULTI;
     if (keys.some(k => b[k] > cap)) {
@@ -1173,7 +1374,7 @@ const S = {
   myBets: {}, stack: [], lastBets: null, chip: 100, chipSet: null,
   submitting: false, animating: false, frozenBalance: 0,
   lastRoll: null, localDeadline: 0, autoSubmitted: false,
-  unread: 0, session: 0, dailyShown: false
+  unread: 0, session: 0, dailyShown: false, gymIdx: 0, gymJump: 0
 };
 let room = null;   // экземпляр Room, если мы хост стола
 let net = {peer: null, conn: null, lastSeen: 0, hb: null};
@@ -1296,7 +1497,7 @@ class Room {
   }
   // Цвет раунда и «Дуэль»: один цвет два раунда подряд → следующий раунд с бонусом
   drawColorRound() {
-    const color = drawColor(), duel = this.streak.duelNext;
+    const color = drawColor(this.streak.last), duel = this.streak.duelNext;
     if (color === this.streak.last) this.streak.n++;
     else { this.streak.last = color; this.streak.n = 1; }
     if (duel) this.streak.n = 1;
@@ -1307,7 +1508,8 @@ class Room {
     if (this.destroyed || this.phase !== 'betting') return;
     this.clearTimer();
     this.phase = 'rolling';
-    const outcome = this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
+    const outcome = this.game === 'gym' ? drawGym(this.lastGym) : this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
+    if (this.game === 'gym') this.lastGym = outcome.land.indexOf(true);
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
@@ -1354,6 +1556,7 @@ class Room {
 }
 function historyItem(game, outcome) {
   if (game === 'cards') return {n: cardsTotal(outcome)};
+  if (game === 'gym') return {g: outcome.land.map(v => v ? 1 : 0)};
   if (game === 'chest') return outcome.chests;
   return game === 'dice' ? outcome.dice : {c: outcome.color, duel: !!outcome.duel};
 }
@@ -1608,7 +1811,11 @@ function onRoll(msg) {
   if (res && res.staked > 0) { S.lastBets = {...res.bets}; S.myBets = {}; S.stack = []; }
   if (res && !S.view.infinite) { profile.balance = res.balance; saveProfile(); }
   S.lastRoll = null;
-  if (S.game === 'dice') animateRoll(outcome.dice);
+  if (S.game === 'gym') {
+    S.gymJump = res && res.staked > 0 ? +Object.keys(res.bets)[0] - 1 : (S.gymIdx || 0);
+    S.gymIdx = S.gymJump;
+    animateGym(outcome, S.gymJump, session);
+  } else if (S.game === 'dice') animateRoll(outcome.dice);
   else if (S.game === 'chest') { sfxRoll(); vibrate([20, 60, 20]); }
   else if (S.game === 'cards') animateCards(outcome, session);
   else animateColor(outcome.color, session);
@@ -1618,7 +1825,7 @@ function onRoll(msg) {
     S.animating = false;
     lightCell(null);
     const ev = S.game === 'dice' ? evaluateRoll(outcome.dice) : null;
-    S.lastRoll = {outcome, ev, res};
+    S.lastRoll = {outcome, ev, res, gymIdx: S.game === 'gym' ? S.gymJump : null};
     S.view.players.forEach(p => {
       const r = msg.results[p.id];
       if (r) { p.balance = r.balance; p.net = r.net; }
@@ -1634,7 +1841,7 @@ function onRoll(msg) {
         const r = msg.results[p.id];
         if (r && r.staked > 0) parts.push(`${p.name} ${signed(r.payout - r.staked)}`);
       }
-      const what = S.game === 'cards' ? `кубик ${outcome.die}, сумма ${cardsTotal(outcome)}` : S.game === 'chest' ? 'сундуки открыты' : S.game === 'dice'
+      const what = S.game === 'gym' ? 'матрас: ' + GYM.map((h, i) => `×${h.mult} ${outcome.land[i] ? '✓' : '✗'}`).join(', ') : S.game === 'cards' ? `кубик ${outcome.die}, сумма ${cardsTotal(outcome)}` : S.game === 'chest' ? 'сундуки открыты' : S.game === 'dice'
         ? `выпало ${outcome.dice[0]} (×${DICE_MULT})`
         : `${colorOf(outcome.color).name.toLowerCase()} ×${colorOf(outcome.color).mult}${outcome.duel ? ' (дуэль)' : ''}`;
       addChat({sys: true, text: `Раунд ${msg.round}: ${what}${parts.length ? ' — ' + parts.join(', ') : ''}`});
@@ -1749,6 +1956,15 @@ function buildBoard(game) {
       + '<span class="bc-zones"><i class="lose">≤10</i><i class="win">11–24 ✓</i><i class="lose">≥25</i></span>' + extras;
     b.appendChild(el);
     cellEls.bet = el;
+  } else if (game === 'gym') {
+    GYM.forEach((h, i) => {
+      const el = document.createElement('button');
+      el.className = `cell ccell gcell h${i + 1}`;
+      el.dataset.cell = h.id;
+      el.innerHTML = `<span class="cname">${h.name}</span><span class="cmult">×${h.mult}</span><span class="cchance">шанс ${Math.round(h.w / GYM_W * 100)}%</span>` + extras;
+      b.appendChild(el);
+      cellEls[h.id] = el;
+    });
   } else if (game === 'chest') {
     GAMES.chest.cells.forEach(c => {
       const el = document.createElement('button');
@@ -1785,7 +2001,7 @@ function render() {
   if (!S.view) return;
   buildChips();
   renderTopbar(); renderBoard(); renderBetInfo(); renderActions(); renderStatus(); renderRollInfo();
-  if (!S.animating) { renderPlayers(); renderHistory(); renderColorTray(); renderCardsTray(); }
+  if (!S.animating) { renderPlayers(); renderHistory(); renderColorTray(); renderCardsTray(); renderGym(); }
 }
 function renderTopbar() {
   const v = S.view, n = v.players.length;
@@ -1801,7 +2017,7 @@ function renderTopbar() {
 function renderBoard() {
   const v = S.view, locked = isLocked();
   // Golden Pick: сундуки остаются открытыми после раунда, пока игрок не сделает новую ставку
-  const reveal = S.game !== 'chest' || (!!S.lastRoll && !S.animating && !Object.keys(S.myBets).length);
+  const reveal = (S.game !== 'chest' && S.game !== 'gym') || (!!S.lastRoll && !S.animating && !Object.keys(S.myBets).length);
   const lr = reveal ? S.lastRoll : null;
   $('#board').classList.toggle('locked', locked);
   $('#board').classList.toggle('opening', S.game === 'chest' && S.animating);
@@ -1814,7 +2030,7 @@ function renderBoard() {
       .filter(p => p.id !== S.myId && p.ready && p.bets[c])
       .map(p => `<i style="background:${p.color}" title="${esc(p.name)}: ${fmt(p.bets[c])}"></i>`).join('');
     const kind = S.game === 'chest' && lr ? lr.outcome.chests[+c - 1] : null;
-    const hit = !!lr && (S.game === 'cards' ? cardsWin(cardsTotal(lr.outcome)) : S.game === 'dice' ? cellWins(c, lr.ev) : S.game === 'chest' ? kind !== 'empty' : lr.outcome.color === c);
+    const hit = !!lr && (S.game === 'cards' ? cardsWin(cardsTotal(lr.outcome)) : S.game === 'dice' ? cellWins(c, lr.ev) : S.game === 'chest' ? kind !== 'empty' : S.game === 'gym' ? !!lr.outcome.land[+c - 1] : lr.outcome.color === c);
     if (S.game === 'chest') {
       el.classList.toggle('open', !!lr);
       el.classList.remove('k-big', 'k-small', 'k-empty');
@@ -1832,8 +2048,8 @@ function renderBetInfo() {
   const total = sumBets(S.myBets), n = Object.keys(S.myBets).length;
   $('#betInfo').innerHTML = total
     ? `Ставка <b>${fmt(total)}</b>` + (isInf() ? ' · фишки бесконечные' : ` · останется <b>${fmt(Math.max(0, myBalance() - total))}</b>`)
-    : S.game === 'cards' ? 'Выберите фишку и нажмите на поле ставки' : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
-  $('#limitInfo').textContent = S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–24' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
+    : S.game === 'gym' ? 'Выберите фишку и нажмите на высоту' : S.game === 'cards' ? 'Выберите фишку и нажмите на поле ставки' : S.game === 'color' ? 'Выберите фишку и нажмите на цвет' : S.game === 'chest' ? 'Выберите фишку и нажмите на сундук' : 'Выберите фишку и нажмите на клетку';
+  $('#limitInfo').textContent = S.game === 'gym' ? 'Без лимита · одна высота за раунд' : S.game === 'cards' ? 'Без лимита · выигрыш при сумме 11–24' : S.game === 'chest' ? 'Без лимита · один сундук за раунд' : S.game === 'color' ? 'Без лимита · один цвет за раунд'
     : isInf() ? 'Без лимита · одна цифра за раунд'
     : `Лимит ${fmt(LIMIT_SINGLE)} · одна цифра за раунд`;
 }
@@ -1865,7 +2081,7 @@ function renderStatus() {
   if (!v) return;
   const m = me();
   let t, urgent = false;
-  if (S.animating) t = S.game === 'cards' ? 'Кубик брошен, карты раздаются…' : S.game === 'dice' ? 'Кубики в игре…' : S.game === 'chest' ? 'Сундуки открываются…' : 'Цвет выбирается…';
+  if (S.animating) t = S.game === 'gym' ? 'Гимнаст прыгает…' : S.game === 'cards' ? 'Кубик брошен, карты раздаются…' : S.game === 'dice' ? 'Кубики в игре…' : S.game === 'chest' ? 'Сундуки открываются…' : 'Цвет выбирается…';
   else if (v.phase !== 'betting') t = 'Подсчёт выигрышей…';
   else if (v.players.length === 1) {
     t = sumBets(S.myBets) ? `Ставка сделана. Жмите «${GAMES[S.game].action}»`
@@ -1915,6 +2131,15 @@ function renderRollInfo() {
       const big = outcome.chests.filter(k => k === 'big').length, small = outcome.chests.filter(k => k === 'small').length;
       h = `<div class="ri-main"><span class="cpill">Сундуки открыты</span></div><div class="ri-sub">Больших призов: <b>${big}</b> · маленьких: <b>${small}</b></div>`;
     }
+  } else if (S.game === 'gym') {
+    const idx = res && res.staked > 0 ? +Object.keys(res.bets)[0] - 1 : -1;
+    if (idx >= 0) {
+      const hh = GYM[idx], ok = outcome.land[idx];
+      h = `<div class="ri-main"><span class="cpill">${hh.name}</span><span class="tot">${ok ? '×' + hh.mult : '✕'}</span></div><div class="ri-sub">${ok ? 'Приземление на <b>матрас</b>' : 'Внизу было <b>пусто</b>'}</div>`;
+    } else {
+      const oks = GYM.filter((x, i) => outcome.land[i]).map(x => '×' + x.mult);
+      h = `<div class="ri-main"><span class="cpill">Прыжок завершён</span></div><div class="ri-sub">${oks.length ? 'Матрас был под: <b>' + oks.join(', ') + '</b>' : 'Матраса не было'}</div>`;
+    }
   } else if (S.game === 'dice') {
     h = `<div class="ri-main"><span class="dv">${outcome.dice[0]}</span><span class="tot">×${DICE_MULT}</span></div>`;
     h += `<div class="ri-sub">Выигрывает цифра: <b>${outcome.dice[0]}</b></div>`;
@@ -1934,6 +2159,10 @@ function renderHistory() {
   const hist = (S.view.history || []).slice(0, S.game === 'dice' ? 8 : S.game === 'chest' ? 5 : 14);
   if (S.game === 'cards') {
     $('#history').innerHTML = hist.filter(h => h && typeof h.n === 'number').map(h => `<span class="cr-h ${cardsWin(h.n) ? 'win' : 'lose'}">${h.n}</span>`).join('');
+    return;
+  }
+  if (S.game === 'gym') {
+    $('#history').innerHTML = hist.filter(h => h && Array.isArray(h.g)).map(h => `<span class="gym-h">${h.g.map(v => `<i class="${v ? 'ok' : ''}"></i>`).join('')}</span>`).join('');
     return;
   }
   if (S.game === 'chest') {
@@ -2010,6 +2239,7 @@ function openRules() {
   $('#rulesColor').hidden = game !== 'color';
   $('#rulesChest').hidden = game !== 'chest';
   $('#rulesCards').hidden = game !== 'cards';
+  $('#rulesGym').hidden = game !== 'gym';
   openModal('modalRules');
 }
 function renderModeSeg() {
@@ -2025,10 +2255,12 @@ function renderGamePick() {
   $('#screen-menu').classList.toggle('sel-color', game === 'color');
   $('#screen-menu').classList.toggle('sel-chest', game === 'chest');
   $('#screen-menu').classList.toggle('sel-cards', game === 'cards');
+  $('#screen-menu').classList.toggle('sel-gym', game === 'gym');
   $('#wordmark').innerHTML = game === 'dice'
     ? '<span class="wtxt wc">LUCK</span><span class="wtxt wc">CUBE</span>'
     : game === 'cards' ? '<span class="wtxt wc">CARD</span><span class="wtxt wc">ROLL</span>'
     : game === 'chest' ? '<span class="wtxt wc">GOLDEN</span><span class="wtxt wc">PICK</span>'
+    : game === 'gym' ? '<span class="wtxt wc">GYMNAST</span><span class="wtxt wc">JUMP</span>'
     : '<span class="wtxt wc">COLOR</span><span class="wtxt wc">CLASH</span>';
   $('#tagline').textContent = GAMES[game].tagline;
 }
@@ -2051,7 +2283,11 @@ function enterGame() {
   screen.classList.toggle('g-color', S.game === 'color');
   screen.classList.toggle('g-chest', S.game === 'chest');
   screen.classList.toggle('g-cards', S.game === 'cards');
+  screen.classList.toggle('g-gym', S.game === 'gym');
   buildBoard(S.game);
+  G.tok++; G.cur = null; G.mode = null; G.at = null; S.gymIdx = 0;
+  G.ready = S.game === 'gym';
+  $('#gymScene').innerHTML = G.ready ? gymSceneHtml() : '';
   setOrb(null);
   $('#chatLog').innerHTML = '';
   S.unread = 0; S.lastRoll = null;
@@ -2153,6 +2389,7 @@ function init() {
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
   buildDice();
   initAvatarEditor();
+  document.querySelectorAll('.hero-gym').forEach(h => { h.innerHTML = gymHeroSvg(); });
   document.querySelectorAll('.hero-chests').forEach(h => { h.innerHTML = chestClosed().repeat(3); });
   document.querySelectorAll('.hero-cards').forEach(h => { h.innerHTML = HERO_CARDS.map(c => cardHtml(c, '', `transform:rotate(${c.rot}deg)`)).join(''); });
 
@@ -2217,6 +2454,7 @@ function init() {
   board.addEventListener('click', e => { const el = e.target.closest('.cell'); if (el) placeChip(el.dataset.cell); });
   board.addEventListener('contextmenu', e => { const el = e.target.closest('.cell'); if (!el) return; e.preventDefault(); removeCell(el.dataset.cell); });
   $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; S.chip = +b.dataset.v; sfxChip(); renderChips(); });
+  $('#gymScene').addEventListener('click', e => { const pl = e.target.closest('.gpl'); if (pl) placeChip(pl.dataset.cell); });
   $('#btnUndo').onclick = undo;
   $('#btnClear').onclick = clearBets;
   $('#btnRepeat').onclick = repeatBets;
