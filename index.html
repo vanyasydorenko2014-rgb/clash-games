@@ -680,7 +680,7 @@ svg{display:block}
     <li>Когда все сделали ставки, выпадает один цвет. Угадали — получаете выплату, не угадали — ставка сгорает.</li>
     <li>Выплаты: <b>красный ×2</b>, <b>синий ×3</b>, <b>золотой ×5</b>. Ставка входит в выплату: 100 на синий → 300, чистая прибыль 200.</li>
     <li>Шансы: красный ≈48%, синий ≈32%, золотой ≈19%. Чем выше множитель, тем реже выпадает цвет.</li>
-    <li>Один и тот же цвет <b>не выпадает два раза подряд</b>.</li>
+    <li>Один и тот же цвет может выпасть несколько раз подряд, но <b>не больше 3 раз</b>.</li>
   </ul>
   <ul>
     <li><b>Бесконечные фишки:</b> режим без риска. Баланс не меняется, лимита на сумму ставки нет, есть фишки до 10M. За столом считается итог сессии.</li>
@@ -1086,10 +1086,14 @@ function rndInt(n) {
   return a[0] % n;
 }
 const rnd6 = () => rndInt(6) + 1;
-// prev — цвет прошлого раунда: он не может выпасть снова подряд
-function drawColor(prev) {
-  const ids = COLORS.map(c => c.id);
-  return ids[drawNoRepeat(COLORS.map(c => c.w), ids.indexOf(prev))];
+// Цвет может повторяться, но не больше COLOR_MAX_RUN раз подряд.
+// prev — цвет прошлого раунда, run — сколько раз он уже выпал подряд.
+const COLOR_MAX_RUN = 3;
+function drawColor(prev, run) {
+  const ids = COLORS.map(c => c.id), w = COLORS.map(c => c.w);
+  if (prev && run >= COLOR_MAX_RUN) w[ids.indexOf(prev)] = 0;   // лимит исчерпан: этот цвет выпасть не может
+  let r = rndInt(w[0] + w[1] + w[2]);
+  for (let k = 0; k < 3; k++) { if (r < w[k]) return ids[k]; r -= w[k]; }
 }
 function genCode() {
   const a = new Uint8Array(6); crypto.getRandomValues(a);
@@ -1399,7 +1403,7 @@ class Room {
     this.phase = 'betting'; this.round = 1; this.history = [];
     this.deadline = 0; this.timer = null; this.hb = null;
     this.code = null; this.peer = null; this.destroyed = false;
-    this.streak = {last: null, n: 0, duelNext: false};   // для «Дуэли» в Color Clash
+    this.streak = {last: null, n: 0, run: 0, duelNext: false};   // для «Дуэли» в Color Clash
   }
   addPlayer(id, name, balance, conn, avatar) {
     const used = new Set([...this.players.values()].map(p => p.color));
@@ -1497,9 +1501,9 @@ class Room {
   }
   // Цвет раунда и «Дуэль»: один цвет два раунда подряд → следующий раунд с бонусом
   drawColorRound() {
-    const color = drawColor(this.streak.last), duel = this.streak.duelNext;
-    if (color === this.streak.last) this.streak.n++;
-    else { this.streak.last = color; this.streak.n = 1; }
+    const color = drawColor(this.streak.last, this.streak.run), duel = this.streak.duelNext;
+    if (color === this.streak.last) { this.streak.n++; this.streak.run++; }
+    else { this.streak.last = color; this.streak.n = 1; this.streak.run = 1; }
     if (duel) this.streak.n = 1;
     this.streak.duelNext = this.streak.n >= 2;
     return {color, duel};
