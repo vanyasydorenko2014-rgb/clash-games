@@ -672,7 +672,7 @@ svg{display:block}
     <li>Выберите фишку и нажмите на высоту (на кнопку или на саму платформу). Ставка одна за раунд, нажатие на другую высоту переносит ставку на неё. Лимита на сумму нет.</li>
     <li>Внизу — неизвестность: <b>матрас</b> или <b>пустое место</b>. Нажмите «Прыгать»: гимнаст прыгает с выбранной платформы.</li>
     <li>Приземлился на матрас — выигрыш по множителю высоты. Ставка входит в выплату: 100 на высоту ×3 → 300. Матраса нет — ставка сгорает.</li>
-    <li>В каждом раунде <b>только один матрас</b>: он лежит под одной из трёх высот, под двумя другими пусто. Шансы, что матрас внизу: <b>×2 — 48%</b>, <b>×3 — 32%</b>, <b>×5 — 19%</b>. Чем выше прыжок, тем реже там матрас. Матрас не бывает под одной и той же высотой два раза подряд.</li>
+    <li>В каждом раунде <b>только один матрас</b>: он лежит под одной из трёх высот, под двумя другими пусто. Шансы, что матрас внизу: <b>×2 — 48%</b>, <b>×3 — 32%</b>, <b>×5 — 19%</b>. Чем выше прыжок, тем реже там матрас. Матрас может оказаться под одной и той же высотой несколько раз подряд, но не больше 3 раз.</li>
   </ul>
   <ul id="rulesColor">
     <li>На поле три цвета: <b>красный</b>, <b>синий</b> и <b>золотой</b>.</li>
@@ -846,9 +846,13 @@ const GYM = [
   {id:'3', name:'Высота 3', mult:5, w:19}
 ];
 const GYM_W = GYM.reduce((t, h) => t + h.w, 0);
-// prev — высота с матрасом в прошлом раунде: она не может выпасть снова подряд
-function drawGym(prev) {
-  const k = drawNoRepeat(GYM.map(h => h.w), prev);
+// Высота с матрасом может повторяться, но не больше 3 раз подряд.
+// prev — высота прошлого раунда, run — сколько раз она уже выпала подряд.
+function drawGym(prev, run) {
+  const w = GYM.map(h => h.w);
+  if (prev >= 0 && run >= 3) w[prev] = 0;
+  let r = rndInt(w[0] + w[1] + w[2]), k = 0;
+  for (; k < 2; k++) { if (r < w[k]) break; r -= w[k]; }
   return {land: GYM.map((h, i) => i === k)};
 }
 const GYM_H = [44, 92, 140], GY_FLOOR = 196, MAT_H = 13;
@@ -1512,8 +1516,8 @@ class Room {
     if (this.destroyed || this.phase !== 'betting') return;
     this.clearTimer();
     this.phase = 'rolling';
-    const outcome = this.game === 'gym' ? drawGym(this.lastGym) : this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
-    if (this.game === 'gym') this.lastGym = outcome.land.indexOf(true);
+    const outcome = this.game === 'gym' ? drawGym(this.lastGym, this.gymRun) : this.game === 'dice' ? {dice: [rndInt(4) + 1]} : this.game === 'chest' ? {chests: drawChests()} : this.game === 'cards' ? drawCards() : this.drawColorRound();
+    if (this.game === 'gym') { const k = outcome.land.indexOf(true); this.gymRun = k === this.lastGym ? (this.gymRun || 0) + 1 : 1; this.lastGym = k; }
     const results = {};
     for (const p of this.players.values()) {
       let staked = p.ready ? sumBets(p.bets) : 0, payout = 0, bonus = 0, winCells = [];
